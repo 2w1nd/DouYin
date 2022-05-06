@@ -1,13 +1,17 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/DouYin/core"
+	"github.com/DouYin/global"
+	"github.com/DouYin/initialize"
 )
 
 func main() {
-	r := gin.Default()
 
-	initRouter(r)
-
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	global.VP = core.Viper()      // 初始化viper
+	global.DB = initialize.Gorm() // gorm连接数据库
+	if global.DB != nil {
+		initialize.MysqlTables(global.DB) // 初始化表
+	}
+	core.RunWindowsServer()
 }

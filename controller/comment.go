@@ -1,30 +1,56 @@
 package controller
 
 import (
+	"github.com/DouYin/model"
+	_ "github.com/DouYin/model"
+	response "github.com/DouYin/model/reponse"
+	"github.com/DouYin/service"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"log"
 )
 
-type CommentListResponse struct {
-	Response
-	CommentList []Comment `json:"comment_list,omitempty"`
+type CommentController struct {
 }
 
-// CommentAction no practical effect, just check if token is valid
-func CommentAction(c *gin.Context) {
-	token := c.Query("token")
+type CommentListResponse struct {
+	response.Response
+	CommentList []response.Response `json:"comment_list,omitempty"`
+}
 
-	if _, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, Response{StatusCode: 0})
+// AddCommentDemo
+// @Description: 添加评论到数据库（栗子）
+// @receiver: e
+// @param: c
+func AddCommentDemo(c *gin.Context) {
+	var comment model.Comment
+	_ = c.ShouldBindJSON(&comment)
+	log.Println(comment.Content)
+	if err := service.AddCommentDemo(comment); err != nil {
+		response.FailWithMessage("创建失败", c)
 	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		response.OkWithMessage("创建成功", c)
 	}
 }
 
-// CommentList all videos have same demo comment list
+// CommentAction
+// @Description: 登录用户对视频进行评论
+// @param: c
+func CommentAction(c *gin.Context) {
+	var userLoginInfo map[string]model.User
+	_ = c.ShouldBindJSON(&userLoginInfo)
+
+	token := c.Query("token")
+
+	if _, exist := userLoginInfo[token]; exist {
+		response.OkWithMessage("成功", c)
+	} else {
+		response.FailWithMessage("错误", c)
+	}
+}
+
+// CommentList
+// @Description: 查看视频的所有评论，按发布时间倒序
+// @param: c
 func CommentList(c *gin.Context) {
-	c.JSON(http.StatusOK, CommentListResponse{
-		Response:    Response{StatusCode: 0},
-		CommentList: DemoComments,
-	})
+	response.OkWithMessage("成功", c)
 }
