@@ -1,42 +1,24 @@
 package controller
 
-import (
-	"github.com/gin-gonic/gin"
-	"net/http"
-)
+import "github.com/gin-gonic/gin"
 
-type UserListResponse struct {
-	Response
-	UserList []User `json:"user_list"`
-}
-
-// RelationAction no practical effect, just check if token is valid
+// RelationAction
+// @Description: 登录用户对其他用户进行关注或取消关注
+// @param: c
 func RelationAction(c *gin.Context) {
-	token := c.Query("token")
 
-	if _, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, Response{StatusCode: 0})
-	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
-	}
 }
 
-// FollowList all users have same follow list
+// FollowList
+// @Description: 登录用户关注的所有用户列表
+// @param: c
 func FollowList(c *gin.Context) {
-	c.JSON(http.StatusOK, UserListResponse{
-		Response: Response{
-			StatusCode: 0,
-		},
-		UserList: []User{DemoUser},
-	})
+
 }
 
-// FollowerList all users have same follower list
+// FollowerList
+// @Description: 所有关注登录用户的粉丝列表
+// @param: c
 func FollowerList(c *gin.Context) {
-	c.JSON(http.StatusOK, UserListResponse{
-		Response: Response{
-			StatusCode: 0,
-		},
-		UserList: []User{DemoUser},
-	})
+
 }

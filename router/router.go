@@ -1,17 +1,20 @@
-package main
+package router
 
 import (
 	"github.com/DouYin/controller"
 	"github.com/gin-gonic/gin"
 )
 
-func initRouter(r *gin.Engine) {
+type Router struct {
+}
+
+func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	// public directory is used to serve static resources
 	r.Static("/static", "./public")
 
 	apiRouter := r.Group("/douyin")
 
-	// basic apis
+	//// basic apis
 	apiRouter.GET("/feed/", controller.Feed)
 	apiRouter.GET("/user/", controller.UserInfo)
 	apiRouter.POST("/user/register/", controller.Register)
@@ -22,6 +25,7 @@ func initRouter(r *gin.Engine) {
 	// extra apis - I
 	apiRouter.POST("/favorite/action/", controller.FavoriteAction)
 	apiRouter.GET("/favorite/list/", controller.FavoriteList)
+	apiRouter.POST("/comment/demo/add/", controller.AddCommentDemo)
 	apiRouter.POST("/comment/action/", controller.CommentAction)
 	apiRouter.GET("/comment/list/", controller.CommentList)
 
