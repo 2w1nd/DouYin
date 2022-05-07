@@ -13,7 +13,7 @@ type CommentService struct {
 // @receiver: e
 // @param: c
 // @return: err
-func AddCommentDemo(c model.Comment) (err error) {
+func (cs *CommentService) AddCommentDemo(c model.Comment) (err error) {
 	err = global.DB.Create(&c).Error
 	return err
 }

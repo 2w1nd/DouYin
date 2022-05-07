@@ -9,6 +9,8 @@ import (
 	"log"
 )
 
+var commentService service.CommentService
+
 type CommentController struct {
 }
 
@@ -25,7 +27,7 @@ func AddCommentDemo(c *gin.Context) {
 	var comment model.Comment
 	_ = c.ShouldBindJSON(&comment)
 	log.Println(comment.Content)
-	if err := service.AddCommentDemo(comment); err != nil {
+	if err := commentService.AddCommentDemo(comment); err != nil {
 		response.FailWithMessage("创建失败", c)
 	} else {
 		response.OkWithMessage("创建成功", c)
@@ -41,6 +43,8 @@ func CommentAction(c *gin.Context) {
 
 	token := c.Query("token")
 
+	// TODO 调用service层函数进行处理
+
 	if _, exist := userLoginInfo[token]; exist {
 		response.OkWithMessage("成功", c)
 	} else {
@@ -52,5 +56,8 @@ func CommentAction(c *gin.Context) {
 // @Description: 查看视频的所有评论，按发布时间倒序
 // @param: c
 func CommentList(c *gin.Context) {
+
+	// TODO 调用service层函数进行处理
+
 	response.OkWithMessage("成功", c)
 }
