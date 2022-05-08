@@ -22,6 +22,8 @@ func MysqlTables(db *gorm.DB) {
 		model.Comment{},
 		model.User{},
 		model.Video{},
+		model.Follow{},
+		model.Favorite{},
 	)
 	if err != nil {
 		log.Println("register table failed")
