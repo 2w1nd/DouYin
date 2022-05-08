@@ -17,7 +17,7 @@ func RunWindowsServer() {
 	address := fmt.Sprintf(":%d", global.CONFIG.System.Addr)
 
 	s := initServer(address, Router)
-	log.Println(address)
+	log.Println("端口号" + address)
 	fmt.Println(`
 		DouYin项目成功启动
 		====================================================================
