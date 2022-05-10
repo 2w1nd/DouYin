@@ -6,7 +6,7 @@ redis:
 mysql:
   path: 127.0.0.1
   config: charset=utf8&parseTime=True&loc=Local
-  db-name: douyinService
+  db-name: douyin
   username: root
   password: 123456
   max-idle-conns: 10
