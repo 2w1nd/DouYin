@@ -1,7 +1,7 @@
 package initialize
 
 import (
-	_router "github.com/DouYin/router"
+	_router "github.com/DouYin/service/router"
 	"github.com/gin-gonic/gin"
 )
 
