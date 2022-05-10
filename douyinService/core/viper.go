@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"github.com/DouYin/global"
+	"github.com/DouYin/service/global"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )

@@ -1,10 +1,9 @@
 package controller
 
 import (
-	"github.com/DouYin/model"
-	_ "github.com/DouYin/model"
-	response "github.com/DouYin/model/reponse"
-	"github.com/DouYin/service"
+	"github.com/DouYin/common/entity/response"
+	model2 "github.com/DouYin/common/model"
+	"github.com/DouYin/service/service"
 	"github.com/gin-gonic/gin"
 	"log"
 )
@@ -24,7 +23,7 @@ type CommentListResponse struct {
 // @receiver: e
 // @param: c
 func AddCommentDemo(c *gin.Context) {
-	var comment model.Comment
+	var comment model2.Comment
 	_ = c.ShouldBindJSON(&comment)
 	log.Println(comment.Content)
 	if err := commentService.AddCommentDemo(comment); err != nil {
@@ -38,7 +37,7 @@ func AddCommentDemo(c *gin.Context) {
 // @Description: 登录用户对视频进行评论
 // @param: c
 func CommentAction(c *gin.Context) {
-	var userLoginInfo map[string]model.User
+	var userLoginInfo map[string]model2.User
 	_ = c.ShouldBindJSON(&userLoginInfo)
 
 	token := c.Query("token")

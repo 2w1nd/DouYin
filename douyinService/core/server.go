@@ -2,8 +2,8 @@ package core
 
 import (
 	"fmt"
-	"github.com/DouYin/global"
-	"github.com/DouYin/initialize"
+	"github.com/DouYin/service/global"
+	"github.com/DouYin/service/initialize"
 	"log"
 )
 

@@ -1,8 +1,8 @@
 package initialize
 
 import (
-	"github.com/DouYin/global"
-	"github.com/DouYin/model"
+	model2 "github.com/DouYin/common/model"
+	"github.com/DouYin/service/global"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -19,11 +19,11 @@ func Gorm() *gorm.DB {
 // @param: db
 func MysqlTables(db *gorm.DB) {
 	err := db.AutoMigrate(
-		model.Comment{},
-		model.User{},
-		model.Video{},
-		model.Follow{},
-		model.Favorite{},
+		model2.Comment{},
+		model2.User{},
+		model2.Video{},
+		model2.Follow{},
+		model2.Favorite{},
 	)
 	if err != nil {
 		log.Println("register table failed")

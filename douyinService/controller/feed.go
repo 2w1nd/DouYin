@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"github.com/DouYin/model"
-	response "github.com/DouYin/model/reponse"
+	"github.com/DouYin/common/entity/response"
+	model2 "github.com/DouYin/common/model"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -10,8 +10,8 @@ import (
 
 type FeedResponse struct {
 	response.Response
-	VideoList []model.Video `json:"video_list,omitempty"`
-	NextTime  int64         `json:"next_time,omitempty"`
+	VideoList []model2.Video `json:"video_list,omitempty"`
+	NextTime  int64          `json:"next_time,omitempty"`
 }
 
 // Feed
@@ -20,7 +20,7 @@ type FeedResponse struct {
 func Feed(c *gin.Context) {
 	c.JSON(http.StatusOK, FeedResponse{
 		Response:  response.Response{StatusCode: 0},
-		VideoList: model.DemoVideos,
+		VideoList: model2.DemoVideos,
 		NextTime:  time.Now().Unix(),
 	})
 }

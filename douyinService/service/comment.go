@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/DouYin/global"
-	"github.com/DouYin/model"
+	"github.com/DouYin/common/model"
+	"github.com/DouYin/service/global"
 )
 
 type CommentService struct {

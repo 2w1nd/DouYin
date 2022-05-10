@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/DouYin/core"
-	"github.com/DouYin/global"
-	"github.com/DouYin/initialize"
+	"github.com/DouYin/service/core"
+	"github.com/DouYin/service/global"
+	"github.com/DouYin/service/initialize"
 )
 
 func main() {
