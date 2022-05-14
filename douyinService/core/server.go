@@ -12,7 +12,9 @@ type server interface {
 }
 
 func RunWindowsServer() {
-	Router := initialize.Routers()
+	initialize.Redis()
+
+	Router := initialize.Routers() // 初始化路由
 
 	address := fmt.Sprintf(":%d", global.CONFIG.System.Addr)
 
