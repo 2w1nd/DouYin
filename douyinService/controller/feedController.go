@@ -16,7 +16,10 @@ var feedService service.FeedService
 // @param: c
 func Feed(c *gin.Context) {
 
-	video := feedService.Feed(c)
+	token := c.Query("token")
+	latestTime := c.Query("latest_time")
+
+	video := feedService.Feed(token, latestTime)
 
 	c.JSON(http.StatusOK, vo.VideoListVo{
 		Response:  response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
