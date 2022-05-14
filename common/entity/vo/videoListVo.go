@@ -2,21 +2,28 @@ package vo
 
 import (
 	"github.com/DouYin/common/entity/response"
-	"github.com/DouYin/common/model"
 )
 
 type VideoListVo struct {
 	response.Response
-	NextTime  int64   `json:"next_time,omitempty"`
+	NextTime  int64     `json:"next_time"`
 	VideoList []VideoVo `json:"video_list,omitempty"`
 }
 
 type VideoVo struct {
-	Id            int64  `json:"id,omitempty"`
-	Author        model.User   `json:"author"`
-	PlayUrl       string `json:"play_url" json:"play_url,omitempty"`
-	CoverUrl      string `json:"cover_url,omitempty"`
-	FavoriteCount int64  `json:"favorite_count,omitempty"`
-	CommentCount  int64  `json:"comment_count,omitempty"`
-	IsFavorite    bool   `json:"is_favorite,omitempty"`
+	VideoID       uint64   `json:"id,omitempty"`
+	Author        AuthorVo `json:"author"`
+	PlayUrl       string   `json:"play_url,omitempty"`
+	CoverUrl      string   `json:"cover_url,omitempty"`
+	FavoriteCount uint32   `json:"favorite_count,omitempty"`
+	CommentCount  uint32   `json:"comment_count,omitempty"`
+	IsFavorite    bool     `json:"is_favorite,omitempty"`
+}
+
+type AuthorVo struct {
+	UserID        uint64 `json:"id,omitempty"`
+	Name          string `json:"name,omitempty"`
+	FollowCount   uint32 `json:"follow_count,omitempty"`
+	FollowerCount uint32 `json:"follower_count,omitempty"`
+	IsFollow      bool   `json:"is_follow,omitempty"`
 }
