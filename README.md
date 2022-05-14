@@ -23,7 +23,9 @@ bytedance youth training camp project
     ├── global          存放全局对象
     ├── initialize      存放初始化配置
     ├── middleware      存放中间件
+    ├── repository      存放数据库操纵语句
     ├── public          资源文件
+    ├── resource        存放配置文件
     ├── router          路由目录
     └── service         业务代码目录
 ```
