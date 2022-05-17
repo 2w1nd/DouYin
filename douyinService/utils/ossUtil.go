@@ -10,7 +10,7 @@ import (
 	"mime/multipart"
 )
 
-func UploadVideo(key string, data *multipart.FileHeader) {
+func UploadVideo(key string, data *multipart.FileHeader) string {
 	//打开文件
 	file, err := data.Open()
 	defer file.Close()
@@ -38,6 +38,7 @@ func UploadVideo(key string, data *multipart.FileHeader) {
 	err = formUploader.Put(context.Background(), &ret, upToken, key, bytes.NewReader(byteContainer), dataLen, &putExtra)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return ""
 	}
+	return key
 }

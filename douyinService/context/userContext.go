@@ -1,7 +1,7 @@
 package context
 
 type UserContext struct {
-	id uint64
+	Id uint64
 }
 
 func token2UserContext(token string) UserContext {
