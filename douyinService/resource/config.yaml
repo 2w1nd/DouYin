@@ -4,13 +4,19 @@ redis:
   password: ''
 
 mysql:
-  path: 127.0.0.1
+  path: localhost
   config: charset=utf8&parseTime=True&loc=Local
   db-name: douyin
-  username: root
-  password: 123456
+  username: douyin
+  password: zijiefan
   max-idle-conns: 10
   max-open-conns: 100
+
+qiniu:
+  bucket: x
+  accessKey: a
+  secretKey: s
+
 
 # system configuration
 system:
