@@ -33,31 +33,19 @@ func (b *BaseRepository) DeleteByID(model interface{}, id int) error {
 	return global.DB.Where("id = ?", id).Delete(model).Error
 }
 
-// GetPages
-// @Description: 分页返回数据
+// First
+// @Description: 根据条件获取一个实体
 // @receiver: b
-// @param: model
-// @param: out
-// @param: pageIndex
-// @param: pageSize
-// @param: totalCount
 // @param: where
-// @param: orders
+// @param: out
+// @param: selects
 // @return: error
-func (b *BaseRepository) GetPages(model interface{}, out interface{}, pageIndex, pageSize int, totalCount *int64, where interface{}, orders ...string) error {
-	db := global.DB.Model(model).Where(model)
-	db = db.Where(where)
-	if len(orders) > 0 {
-		for _, order := range orders {
-			db = db.Order(order)
+func (b *BaseRepository) First(where interface{}, out interface{}, selects ...string) error {
+	db := global.DB.Where(where)
+	if len(selects) > 0 {
+		for _, sel := range selects {
+			db = db.Select(sel)
 		}
 	}
-	err := db.Count(totalCount).Error
-	if err != nil {
-		return err
-	}
-	if *totalCount == 0 {
-		return nil
-	}
-	return db.Offset((pageIndex - 1) * pageSize).Limit(pageSize).Find(out).Error
+	return db.First(out).Error
 }
