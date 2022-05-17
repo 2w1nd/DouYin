@@ -12,6 +12,12 @@ mysql:
   max-idle-conns: 10
   max-open-conns: 100
 
+qiniu:
+  bucket: xlong99
+  accessKey: JafZdnNs3QlssMUSi0LQqA5befbowM7HyibjCexQ
+  secretKey: zY-0Qbyie8s1I_kWlCzy07-NIAtR0v66COV1gKq6
+
+
 # system configuration
 system:
   env: 'public'  # Change to "develop" to skip authentication for development mode
