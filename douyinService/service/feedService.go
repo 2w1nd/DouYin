@@ -1,9 +1,12 @@
 package service
 
 import (
+	"encoding/json"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
+	"github.com/DouYin/service/global"
 	"github.com/DouYin/service/repository"
+	"golang.org/x/net/context"
 	"log"
 )
 
@@ -18,19 +21,38 @@ var videoRepository repository.VideoRepository
 // @param: token
 // @param: latestTime
 // @return: []vo.VideoVo
-func (fs *FeedService) Feed(token, latestTime string) []vo.VideoVo {
+func (fs *FeedService) Feed(id uint64, latestTime string) []vo.VideoVo {
 	var (
 		videoVos  []vo.VideoVo
 		videoList []model.Video
 	)
-	// TODO 解析token获取ID
-	if token == "" {
+
+	// 从缓存查询
+	data1, _ := global.REDIS.Get(context.Background(), "videoVos").Result()
+	if data1 != "" {
+		err := json.Unmarshal([]byte(data1), &videoVos)
+		if err != nil {
+			return nil
+		}
+		log.Println(videoVos)
+		if len(videoVos) != 0 {
+			return videoVos
+		}
+	}
+	log.Println("从数据库中查询")
+	if id == 0 {
 		videoList = videoRepository.GetVideoWithAuthor(latestTime)
 	} else {
 		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(latestTime, 90071992547409929)
 	}
+	if len(videoList) == 0 {
+		return []vo.VideoVo{}
+	}
+
 	videoVos = fs.videoList2Vo(videoList)
-	log.Println(videoVos)
+	// 放入缓存
+	data, _ := json.Marshal(videoVos)
+	global.REDIS.Set(context.Background(), "videoVos", data, 0)
 	return videoVos
 }
 
