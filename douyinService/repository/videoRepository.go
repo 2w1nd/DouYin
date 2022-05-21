@@ -55,3 +55,12 @@ func (v *VideoRepository) GetPublishList(userId uint64) []model.Video {
 	query.Find(&videoList)
 	return videoList
 }
+func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
+	result := global.DB.Debug().Create(&video)
+	err := result.Error
+	if err != nil {
+		return -1
+	}
+	return video.Id
+
+}
