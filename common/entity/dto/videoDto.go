@@ -7,6 +7,7 @@ type VideoDto struct {
 	Author        UserDto `json:"author,omitempty"`
 	PlayURL       string  `json:"play_url,omitempty"`
 	CoverURL      string  `json:"cover_url,omitempty"`
+	Title         bool    `json:"title,omitempty"`
 	FavoriteCount uint32  `json:"favorite_count,omitempty"`
 	CommentCount  uint32  `json:"comment_count,omitempty"`
 	IsFavorite    bool    `json:"is_favorite,omitempty"`
