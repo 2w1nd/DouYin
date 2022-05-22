@@ -10,6 +10,11 @@ type VideoListVo struct {
 	VideoList []VideoVo `json:"video_list,omitempty"`
 }
 
+type VideoData struct {
+	NextTime  int64     `json:"next_time"`
+	VideoList []VideoVo `json:"video_list,omitempty"`
+}
+
 type VideoVo struct {
 	VideoID       uint64   `json:"id,omitempty"`
 	Author        AuthorVo `json:"author"`
