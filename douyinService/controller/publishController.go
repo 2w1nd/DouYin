@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/DouYin/common/entity/dto"
 	"github.com/DouYin/common/entity/response"
-	"github.com/DouYin/service/context"
 	"github.com/DouYin/service/service"
+	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -21,7 +21,7 @@ func Publish(c *gin.Context) {
 		response.FailWithMessage("获取数据失败", c)
 		return
 	}
-	publishService.Publish(context.UserContext{}, data)
+	publishService.Publish(utils.GetUserContext(c), data, c.PostForm("title"))
 	response.Ok(c)
 }
 
@@ -34,7 +34,7 @@ func PublishList(c *gin.Context) {
 		response.FailWithMessage("参数user_id有误", c)
 		return
 	}
-	publishList := publishService.PublishList(context.UserContext{}, dstUserId)
+	publishList := publishService.PublishList(utils.GetUserContext(c), dstUserId)
 	c.JSON(http.StatusOK, dto.VideoListDto{
 		Response:  response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
 		VideoList: publishList,
