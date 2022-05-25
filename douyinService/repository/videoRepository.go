@@ -60,7 +60,7 @@ func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
 	result := global.DB.Debug().Create(&video)
 	err := result.Error
 	if err != nil {
-		return -1
+		return 0
 	}
 	return video.Id
 
