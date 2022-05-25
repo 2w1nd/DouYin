@@ -6,7 +6,7 @@ type Video struct {
 	UserId        uint64     `gorm:"column:author_id;type:bigint(20) unsigned" json:"author_id"`                  // 作者id
 	User          User       `json:"user" gorm:"foreignKey:UserId;references:UserId"`                             // 用于预加载，每个video只有一个user
 	Favorite      []Favorite `json:"favorite" gorm:"foreignKey:VideoId;references:VideoId"`                       // 用于预加载，每个video可以有多个favorite
-	Description   string     `gorm:"column:description;type:varchar(255)" json:"description"`                     // 视频描述
+	Title         string     `gorm:"column:title;type:varchar(255)" json:"title"`                                 // 视频描述
 	Path          string     `gorm:"column:path;type:varchar(255)" json:"path"`                                   // 视频存储路径
 	CoverPath     string     `gorm:"column:cover_path;type:varchar(255)" json:"cover_path"`                       // 视频封面路径
 	FavoriteCount uint32     `gorm:"column:favorite_count;type:int(10) unsigned;default:0" json:"favorite_count"` // 点赞数，冗余字段
