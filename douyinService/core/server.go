@@ -12,7 +12,7 @@ type server interface {
 }
 
 func RunWindowsServer() {
-	initialize.Redis()
+	global.REDIS = initialize.Redis()
 
 	Router := initialize.Routers() // 初始化路由
 
