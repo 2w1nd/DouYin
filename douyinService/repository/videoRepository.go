@@ -3,6 +3,8 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
+	"log"
+	"time"
 )
 
 type VideoRepository struct {
@@ -12,12 +14,13 @@ type VideoRepository struct {
 // @Description: 获得视频以及对应的作者信息
 // @receiver: v
 // @return: []model.Video
-func (v *VideoRepository) GetVideoWithAuthor(latestTime string) []model.Video {
+func (v *VideoRepository) GetVideoWithAuthor(latestTime time.Time) []model.Video {
 	var videoList []model.Video
 	query := global.DB.Model(model.Video{}).Preload("User")
-	//if latestTime != "" {
-	//	query.Where("gmt_created <= ?", latestTime)
-	//}
+	log.Println(latestTime)
+	if !latestTime.IsZero() {
+		query.Where("gmt_created <= ?", latestTime)
+	}
 	query.Order("gmt_created DESC").Limit(30)
 	query.Debug().Find(&videoList)
 	return videoList
@@ -26,7 +29,7 @@ func (v *VideoRepository) GetVideoWithAuthor(latestTime string) []model.Video {
 // GetVideoWithAuthorAndFollowAndFavorite
 // @Description: 查出视频以及对应作者信息，以及当前登录用户是否follow了该作者，是否favorite了该视频
 // @receiver: v
-func (v *VideoRepository) GetVideoWithAuthorAndFollowAndFavorite(latestTime string, id uint64) []model.Video {
+func (v *VideoRepository) GetVideoWithAuthorAndFollowAndFavorite(latestTime time.Time, id uint64) []model.Video {
 	var videoList []model.Video
 	query := global.DB.Debug().
 		Model(model.Video{}).
@@ -34,9 +37,9 @@ func (v *VideoRepository) GetVideoWithAuthorAndFollowAndFavorite(latestTime stri
 		Preload("User.FollowedUser").
 		Preload("Favorite", "user_id = ?", id)
 
-	//if latestTime != "" {
-	//	query.Where("gmt_created <= ?", latestTime)
-	//}
+	if !latestTime.IsZero() {
+		query.Where("gmt_created <= ?", latestTime)
+	}
 	query.Order("gmt_created DESC").Limit(30)
 	query.Find(&videoList)
 	return videoList
@@ -55,6 +58,7 @@ func (v *VideoRepository) GetPublishList(userId uint64) []model.Video {
 	query.Find(&videoList)
 	return videoList
 }
+
 func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
 	result := global.DB.Debug().Create(&video)
 	err := result.Error
@@ -63,4 +67,11 @@ func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
 	}
 	return video.Id
 
+}
+
+func (v *VideoRepository) GetVideoByVideoId(videoId uint64) model.Video {
+	video := model.Video{}
+	query := global.DB.Debug().Model(model.Video{}).Where("video_id = ?", videoId)
+	query.Find(&video)
+	return video
 }

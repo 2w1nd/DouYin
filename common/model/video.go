@@ -3,8 +3,8 @@ package model
 type Video struct {
 	Id            uint64     `gorm:"column:id;type:bigint(20) unsigned;primary_key;AUTO_INCREMENT" json:"id"`     // 主键
 	VideoId       uint64     `gorm:"column:video_id;type:bigint(20) unsigned" json:"video_id"`                    // 唯一videoid
-	UserId        uint64     `gorm:"column:author_id;type:bigint(20) unsigned" json:"author_id"`                  // 作者id
-	User          User       `json:"user" gorm:"foreignKey:UserId;references:UserId"`                             // 用于预加载，每个video只有一个user
+	AuthorId        uint64     `gorm:"column:author_id;type:bigint(20) unsigned" json:"author_id"`                // 作者id
+	User          User       `json:"user" gorm:"foreignKey:UserId;references:AuthorId"`                           // 用于预加载，每个video只有一个user
 	Favorite      []Favorite `json:"favorite" gorm:"foreignKey:VideoId;references:VideoId"`                       // 用于预加载，每个video可以有多个favorite
 	Title         string     `gorm:"column:title;type:varchar(255)" json:"title"`                                 // 视频描述
 	Path          string     `gorm:"column:path;type:varchar(255)" json:"path"`                                   // 视频存储路径

@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"time"
 )
 
 var feedService service.FeedService
@@ -20,14 +19,13 @@ var feedService service.FeedService
 func Feed(c *gin.Context) {
 	var user context.UserContext
 	user = utils.GetUserContext(c)
-	log.Println(user.Id)
 	latestTime := c.Query("latest_time")
-
-	videoList := feedService.Feed(user.Id, latestTime)
-
+	log.Println(user.Id)
+	videoList, nextTime := feedService.Feed(user.Id, latestTime)
+	log.Println(nextTime)
 	c.JSON(http.StatusOK, vo.VideoListVo{
 		Response:  response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
-		NextTime:  time.Now().Unix(),
+		NextTime:  nextTime.Unix(),
 		VideoList: videoList,
 	})
 }

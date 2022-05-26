@@ -6,8 +6,10 @@ import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 	"github.com/DouYin/service/repository"
+	"github.com/DouYin/service/utils"
 	"golang.org/x/net/context"
 	"log"
+	"time"
 )
 
 type FeedService struct {
@@ -21,39 +23,43 @@ var videoRepository repository.VideoRepository
 // @param: token
 // @param: latestTime
 // @return: []vo.VideoVo
-func (fs *FeedService) Feed(id uint64, latestTime string) []vo.VideoVo {
+func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Time) {
 	var (
+		videoData vo.VideoData
 		videoVos  []vo.VideoVo
 		videoList []model.Video
+		timeUtil  utils.Time
 	)
-
 	// 从缓存查询
 	data1, _ := global.REDIS.Get(context.Background(), "videoVos").Result()
 	if data1 != "" {
-		err := json.Unmarshal([]byte(data1), &videoVos)
+		log.Println("从缓存中查询")
+		err := json.Unmarshal([]byte(data1), &videoData)
 		if err != nil {
-			return nil
+			return nil, time.Time{}
 		}
-		log.Println(videoVos)
-		if len(videoVos) != 0 {
-			return videoVos
+		if len(videoData.VideoList) != 0 {
+			return videoData.VideoList, time.Unix(videoData.NextTime, 0)
 		}
 	}
+	// 从数据库中查询
 	log.Println("从数据库中查询")
 	if id == 0 {
-		videoList = videoRepository.GetVideoWithAuthor(latestTime)
+		videoList = videoRepository.GetVideoWithAuthor(timeUtil.GetTimeStamp(latestTime))
 	} else {
-		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(latestTime, 90071992547409929)
+		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(timeUtil.GetTimeStamp(latestTime), 90071992547409929)
 	}
 	if len(videoList) == 0 {
-		return []vo.VideoVo{}
+		return []vo.VideoVo{}, time.Time{}
 	}
 
 	videoVos = fs.videoList2Vo(videoList)
 	// 放入缓存
-	data, _ := json.Marshal(videoVos)
+	videoData.VideoList = videoVos
+	videoData.NextTime = videoList[0].GmtCreated.Unix()
+	data, _ := json.Marshal(videoData)
 	global.REDIS.Set(context.Background(), "videoVos", data, 0)
-	return videoVos
+	return videoVos, videoList[0].GmtCreated
 }
 
 //

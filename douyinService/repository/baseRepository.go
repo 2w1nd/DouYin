@@ -24,13 +24,25 @@ func (b *BaseRepository) Save(value interface{}) error {
 }
 
 // DeleteByID
-// @Description: 根据id删除实体
+// @Description: 根据id删除实体（直接删除）
 // @receiver: b
 // @param: model
 // @param: id
 // @return: error
-func (b *BaseRepository) DeleteByID(model interface{}, id int) error {
-	return global.DB.Where("id = ?", id).Delete(model).Error
+func (b *BaseRepository) DeleteByID(where interface{}, out interface{}) error {
+	db := global.DB.Where(where)
+	return db.Where(where).Delete(out).Error
+}
+
+// DeleteSoftByID
+// @Description: 根据id删除（软删除）
+// @receiver: b
+// @param: where
+// @param: out
+// @return: error
+func (b *BaseRepository) DeleteSoftByID(where interface{}, out interface{}) error {
+	db := global.DB.Where(where)
+	return db.Model(out).Where(where).Update("is_deleted", 1).Error
 }
 
 // First

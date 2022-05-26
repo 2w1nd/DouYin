@@ -6,7 +6,7 @@ import (
 	"github.com/DouYin/service/global"
 	"github.com/DouYin/service/repository"
 	"github.com/go-redis/redis/v8"
-	"github.com/google/martian/log"
+	"log"
 	"reflect"
 	"strconv"
 	"time"
@@ -34,24 +34,24 @@ func Time2Float(time time.Time) float64 {
 func redisAddUserLikeVideos(favoriteInfo model.Favorite) *redis.IntCmd {
 	zsetKey := "user_like_videos" + strconv.Itoa(int(favoriteInfo.UserId))
 
-	zsetScore := Time2Float(favoriteInfo.GmtCreated)
+	zsetScore := Time2Float(time.Now())
 	zsetMember := strconv.Itoa(int(favoriteInfo.VideoId))
 	zsetValue := &redis.Z{zsetScore, zsetMember}
 
 	var ok *redis.IntCmd
 	//为false时记录为点赞
+	log.Println(favoriteInfo.IsDeleted)
 	if favoriteInfo.IsDeleted == LIKE {
 		//未查找到该点赞结果
-		if global.REDIS.ZRank(ctx, zsetKey, zsetMember) == nil {
+		if global.REDIS.ZRank(ctx, zsetKey, zsetMember) != nil {
 			ok = global.REDIS.ZAdd(ctx, zsetKey, zsetValue)
-			log.Errorf(zsetKey, "点赞失败")
+			log.Println(zsetKey, "点赞成功")
 		}
 	} else if favoriteInfo.IsDeleted == UNLIKE {
 		if global.REDIS.ZRank(ctx, zsetKey, zsetMember) != nil {
 			ok = global.REDIS.ZRem(ctx, zsetKey, zsetValue)
-			log.Errorf(zsetKey, "取消赞失败")
+			log.Println(zsetKey, "取消赞成功")
 		}
-
 	}
 	return ok
 }
@@ -63,10 +63,10 @@ func redisAddVideLikedByUsers(favoriteInfo model.Favorite) *redis.IntCmd {
 
 	var ok *redis.IntCmd
 	if favoriteInfo.IsDeleted == LIKE {
-		ok = global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId), 1)
+		ok = global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId)%10, 1)
 
 	} else {
-		ok = global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId), 0)
+		ok = global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId)%10, 0)
 
 	}
 
@@ -112,6 +112,7 @@ func (fs *FavoriteService) RedisGetVideoFavoriteCount(videoId int64) (int64, err
 	ans, err := global.REDIS.BitCount(ctx, bitmapKey, favoriteCount).Result()
 	return ans, err
 }
+
 func (fs *FavoriteService) GetFavoriteList(videoIds []int64) {
 
 }
