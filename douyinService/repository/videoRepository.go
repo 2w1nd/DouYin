@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
+	"log"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type VideoRepository struct {
 func (v *VideoRepository) GetVideoWithAuthor(latestTime time.Time) []model.Video {
 	var videoList []model.Video
 	query := global.DB.Model(model.Video{}).Preload("User")
+	log.Println(latestTime)
 	if !latestTime.IsZero() {
 		query.Where("gmt_created <= ?", latestTime)
 	}
@@ -56,6 +58,7 @@ func (v *VideoRepository) GetPublishList(userId uint64) []model.Video {
 	query.Find(&videoList)
 	return videoList
 }
+
 func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
 	result := global.DB.Debug().Create(&video)
 	err := result.Error
@@ -64,4 +67,11 @@ func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
 	}
 	return video.Id
 
+}
+
+func (v *VideoRepository) GetVideoByVideoId(videoId uint64) model.Video {
+	video := model.Video{}
+	query := global.DB.Debug().Model(model.Video{}).Where("video_id = ?", videoId)
+	query.Find(&video)
+	return video
 }

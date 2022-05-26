@@ -2,10 +2,11 @@ package controller
 
 import (
 	"fmt"
+	"github.com/DouYin/common/context"
 	"github.com/DouYin/common/entity/response"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/service"
-	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/martian/log"
 	"net/http"
@@ -30,21 +31,26 @@ type QueryInfo struct {
 // @param: c
 func FavoriteAction(c *gin.Context) {
 	//鉴权
-	//claims := jwt.ExtractClaims(c)
-	//userId := uint64(claims["id"].(float64))
-	//log.Infof("userID", userId)
+	var userContext context.UserContext
+	userContext = utils.GetUserContext(c)
+	userID := userContext.Id
 
 	var queryInfo QueryInfo
-	err := c.ShouldBind(&queryInfo)
+	err := c.ShouldBindQuery(&queryInfo)
 	if err != nil {
 		log.Errorf("获取favoriteInfo失败", err)
 	}
 	fmt.Println("queryInfo: ", queryInfo)
 
 	var favoriteInfo model.Favorite
+	var isDeleted bool
 
+	favoriteInfo = model.Favorite{
+		UserId:    userID,
+		VideoId:   uint64(queryInfo.VideoId),
+		IsDeleted: isDeleted,
+	}
 	//1是点赞(false),2是取消(true)
-
 	if queryInfo.ActionType == 1 {
 		favoriteInfo.IsDeleted = LIKE
 	} else if queryInfo.ActionType == 2 {
@@ -52,16 +58,15 @@ func FavoriteAction(c *gin.Context) {
 	}
 
 	//存入Redis
-	//ok := favoriteService.RedisAddFavorite(favoriteInfo)
+	ok := favoriteService.RedisAddFavorite(favoriteInfo)
 
 	//如果存入成功返回
-	//if ok == true {
-	//	c.JSON(-1, response.Response{http.StatusOK, "点赞失败"})
-	//} else {
-	//	c.JSON(0, response.Response{http.StatusOK, "点赞成功"})
-	//}
-	c.JSON(0, response.Response{http.StatusOK, "点赞成功"})
-
+	if ok == true {
+		c.JSON(-1, response.Response{http.StatusOK, "点赞失败"})
+	} else {
+		c.JSON(0, response.Response{http.StatusOK, "点赞成功"})
+	}
+	//c.JSON(0, response.Response{http.StatusOK, "点赞成功"})
 }
 
 // FavoriteList
@@ -69,8 +74,9 @@ func FavoriteAction(c *gin.Context) {
 // @param: c
 func FavoriteList(c *gin.Context) {
 	//鉴权
-	claims := jwt.ExtractClaims(c)
-	userID := uint64(claims["id"].(float64))
+	var userContext context.UserContext
+	userContext = utils.GetUserContext(c)
+	userID := userContext.Id
 	log.Infof("userID", userID)
 
 	//在Redis中查询并返回

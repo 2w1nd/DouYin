@@ -8,6 +8,7 @@ import (
 	"github.com/DouYin/service/repository"
 	"github.com/DouYin/service/utils"
 	"github.com/google/uuid"
+	"log"
 	"mime/multipart"
 	"sync"
 )
@@ -26,12 +27,14 @@ func (ps *PublishService) Publish(userContext context.UserContext, data *multipa
 		utils.UploadVideo(newKey, data)
 		task.Done()
 	}()
+	log.Println("上次文件，准备存入数据库")
 	path := "http://img.xlong.xyz/video/" + newKey
 	cover := path + "?vframe/jpg/offset/1"
 	//存入数据库
+	log.Println(userContext.Id)
 	video := model.Video{
 		VideoId:       uint64(global.ID.Generate()),
-		UserId:        userContext.Id,
+		AuthorId:      userContext.Id,
 		Title:         title,
 		Path:          path,
 		CoverPath:     cover,

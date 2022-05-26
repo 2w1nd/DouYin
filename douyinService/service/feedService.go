@@ -8,6 +8,7 @@ import (
 	"github.com/DouYin/service/repository"
 	"github.com/DouYin/service/utils"
 	"golang.org/x/net/context"
+	"log"
 	"time"
 )
 
@@ -32,15 +33,17 @@ func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Ti
 	// 从缓存查询
 	data1, _ := global.REDIS.Get(context.Background(), "videoVos").Result()
 	if data1 != "" {
+		log.Println("从缓存中查询")
 		err := json.Unmarshal([]byte(data1), &videoData)
 		if err != nil {
 			return nil, time.Time{}
 		}
-		if len(videoVos) != 0 {
+		if len(videoData.VideoList) != 0 {
 			return videoData.VideoList, time.Unix(videoData.NextTime, 0)
 		}
 	}
 	// 从数据库中查询
+	log.Println("从数据库中查询")
 	if id == 0 {
 		videoList = videoRepository.GetVideoWithAuthor(timeUtil.GetTimeStamp(latestTime))
 	} else {
