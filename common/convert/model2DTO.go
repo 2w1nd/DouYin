@@ -17,12 +17,12 @@ func User2UserDTO(user model.User) dto.UserDto {
 func Video2VideoDto(video model.Video) dto.VideoDto {
 	var isFollow, isFavorite bool
 	if len(video.User.FollowedUser) != 0 {
-		isFollow = video.User.FollowedUser[0].IsDeleted
+		isFollow = !video.User.FollowedUser[0].IsDeleted
 	} else {
 		isFollow = false
 	}
 	if len(video.Favorite) != 0 {
-		isFavorite = video.Favorite[0].IsDeleted
+		isFavorite = !video.Favorite[0].IsDeleted
 	} else {
 		isFavorite = false
 	}
