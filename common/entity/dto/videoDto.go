@@ -8,9 +8,9 @@ type VideoDto struct {
 	PlayURL       string  `json:"play_url,omitempty"`
 	CoverURL      string  `json:"cover_url,omitempty"`
 	Title         bool    `json:"title,omitempty"`
-	FavoriteCount uint32  `json:"favorite_count,omitempty"`
-	CommentCount  uint32  `json:"comment_count,omitempty"`
-	IsFavorite    bool    `json:"is_favorite,omitempty"`
+	FavoriteCount uint32  `json:"favorite_count"`
+	CommentCount  uint32  `json:"comment_count"`
+	IsFavorite    bool    `json:"is_favorite"`
 }
 type VideoListDto struct {
 	response.Response
