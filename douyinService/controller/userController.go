@@ -51,13 +51,13 @@ func Login(c *gin.Context) {
 // @Description: 获取登录用户的id，昵称，如果实现社交部分的功能，还会返回关注数的粉丝数
 // @param: c
 func UserInfo(c *gin.Context) {
-	username := c.Query("username")
+	userId := c.Query("user_id")
 	userMsg := service.UserMsg{}
-	if username == "" || len(username) > 32 {
+	if userId == "" {
 		msgHandler(c, 500, "参数错误", &userMsg)
 		return
 	}
-	code, msg, userMsg := userService.UserInfo(username, c.GetHeader("userId"))
+	code, msg, userMsg := userService.UserInfo(userId, c.GetHeader("userId"))
 	msgHandler(c, code, msg, &userMsg)
 }
 

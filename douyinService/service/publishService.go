@@ -43,6 +43,7 @@ func (ps *PublishService) Publish(userContext context.UserContext, data *multipa
 		CommentCount:  0,
 	}
 	videoRepository.SaveVideo(video)
+	global.REDIS.Del(ctx, "videoVos")
 	task.Wait()
 }
 

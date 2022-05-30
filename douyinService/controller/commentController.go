@@ -7,6 +7,7 @@ import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 	"github.com/DouYin/service/service"
+	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
@@ -45,7 +46,7 @@ func CommentAction(c *gin.Context) {
 			// from here you can create your own error messages in whatever language you wish
 			return
 		} else {
-			if CommentVos, err := commentService.AddComment(commentReq); !err {
+			if CommentVos, err := commentService.AddComment(commentReq, utils.GetUserContext(c)); !err {
 				response.FailWithMessage("创建失败", c)
 			} else {
 				c.JSON(http.StatusOK, vo.CommentRet{

@@ -58,7 +58,7 @@ func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Ti
 	videoData.VideoList = videoVos
 	videoData.NextTime = videoList[0].GmtCreated.Unix()
 	data, _ := json.Marshal(videoData)
-	global.REDIS.Set(context.Background(), "videoVos", data, 0)
+	global.REDIS.Set(context.Background(), "videoVos", data, 10*time.Minute)
 	return videoVos, videoList[0].GmtCreated
 }
 
@@ -94,6 +94,7 @@ func (fs *FeedService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 			CoverUrl:      video.CoverPath,
 			FavoriteCount: video.FavoriteCount,
 			CommentCount:  video.CommentCount,
+			Title:         video.Title,
 			IsFavorite:    isFavorite,
 		}
 		videoVos = append(videoVos, videoVo)
