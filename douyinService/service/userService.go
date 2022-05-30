@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/DouYin/service/middleware"
+	"log"
 	"strconv"
 
 	"github.com/DouYin/common/model"
@@ -69,16 +70,22 @@ func (us *UserService) Login(username, password string) (code int, msg, token st
 	return 500, "密码错误", "", 0
 }
 
-func (us *UserService) UserInfo(reqUsername string, userId string) (code int, msg string, userMsg UserMsg) {
-	user, err := userRepository.GetUserByUserName(reqUsername)
+func (us *UserService) UserInfo(id string, myuserId string) (code int, msg string, userMsg UserMsg) {
+	userId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Println("类型转化失败")
+		return
+	}
+	where := model.User{UserId: uint64(userId)}
+	user, err := userRepository.GetFirstUser(where)
 	if err != nil {
 		return 500, err.Error(), UserMsg{}
 	}
-	id, err := strconv.Atoi(userId)
+	myid, err := strconv.Atoi(myuserId)
 	if err != nil {
 		return 500, err.Error(), UserMsg{}
 	}
-	_, err = userRepository.GetfollowByUserId(uint64(id), user.UserId)
+	_, err = userRepository.GetfollowByUserId(uint64(myid), user.UserId)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return 0, "未关注", UserMsg{

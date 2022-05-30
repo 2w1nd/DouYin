@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	context2 "github.com/DouYin/common/context"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
@@ -28,16 +29,15 @@ func (cs *CommentService) AddCommentDemo(c model.Comment) (err error) {
 	return err
 }
 
-func (cs *CommentService) AddComment(req request.CommentReq) ([]vo.CommentVo, bool) {
+func (cs *CommentService) AddComment(req request.CommentReq, ctx context2.UserContext) ([]vo.CommentVo, bool) {
 	var (
 		commentVos  []vo.CommentVo
 		commentList []model.Comment
 	)
-	userId := 0
 	commentId := uint64(global.ID.Generate())
 	comment := model.Comment{
 		CommentId: commentId,
-		UserId:    uint64(userId),
+		UserId:    ctx.Id,
 		VideoId:   req.VideoId,
 		Content:   req.CommentTest,
 	}

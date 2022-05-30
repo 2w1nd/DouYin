@@ -6,6 +6,7 @@ import (
 )
 
 type UserRepository struct {
+	Base BaseRepository
 }
 
 // QueryUserDtoInfo 查询UserDto需要的信息
@@ -36,6 +37,14 @@ func (u UserRepository) CreateUser(user *model.User) (*model.User, error) {
 		user.UserId, user.Name, user.Username, user.Password, user.Salt).Scan(&user).Error
 	if err != nil {
 		return nil, err
+	}
+	return user, nil
+}
+
+func (u *UserRepository) GetFirstUser(where interface{}) (model.User, error) {
+	var user model.User
+	if err := u.Base.First(where, &user); err != nil {
+		return model.User{}, err
 	}
 	return user, nil
 }
