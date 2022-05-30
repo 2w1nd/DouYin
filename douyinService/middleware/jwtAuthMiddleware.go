@@ -18,8 +18,8 @@ type MyClaims struct {
 
 // CreateToken 生成token
 func CreateToken(userId uint64, username string) (string, error) {
-	expireTime := time.Now().Add(24 * time.Hour) //过期时间
-	nowTime := time.Now()                        //当前时间
+	expireTime := time.Now().Add(1 * time.Hour) //过期时间
+	nowTime := time.Now()                       //当前时间
 	claims := MyClaims{
 		UserID:   userId,
 		UserName: username,
@@ -51,9 +51,12 @@ func JwtMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//从query中获取token
 		tokenStr := c.Query("token")
+		if tokenStr == "" {
+			tokenStr = c.PostForm("token")
+		}
 		//用户不存在
 		if tokenStr == "" {
-			c.JSON(http.StatusOK, gin.H{"status_code": 0, "status_msg": "用户不存在"})
+			c.JSON(http.StatusOK, gin.H{"status_code": 0, "status_msg": "Token为空或用户不存在"})
 			c.Abort() //阻止执行
 			return
 		}
@@ -73,5 +76,18 @@ func JwtMiddleware() gin.HandlerFunc {
 		c.Request.Header.Set("userId", strconv.FormatUint(tokenStruck.UserID, 10))
 		c.Request.Header.Set("userName", tokenStruck.UserName)
 		c.Next()
+	}
+}
+
+// NewJWTFuncWithAction 该方法用于使得部分接口没有token就不走jwt
+func NewJWTFuncWithAction() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		route := c.Query("token")
+		route1 := c.PostForm("token")
+		if len(route) != 0 || len(route1) != 0 {
+			auth := JwtMiddleware()
+			auth(c)
+			return
+		}
 	}
 }

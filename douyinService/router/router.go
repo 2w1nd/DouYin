@@ -16,19 +16,19 @@ func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	apiRouter := r.Group("/douyin")
 
 	//// basic apis
-	apiRouter.GET("/feed/", middleware.JwtMiddleware(), controller.Feed)
+	apiRouter.GET("/feed/", middleware.NewJWTFuncWithAction(), controller.Feed)
 	apiRouter.GET("/user/", middleware.JwtMiddleware(), controller.UserInfo)
 	apiRouter.POST("/user/register/", controller.Register)
 	apiRouter.POST("/user/login/", controller.Login)
-	apiRouter.POST("/publish/action/", controller.Publish)
-	apiRouter.GET("/publish/list/", controller.PublishList)
+	apiRouter.POST("/publish/action/", middleware.JwtMiddleware(), controller.Publish)
+	apiRouter.GET("/publish/list/", middleware.JwtMiddleware(), controller.PublishList)
 
 	// extra apis - I
 	apiRouter.POST("/favorite/action/", controller.FavoriteAction)
 	apiRouter.GET("/favorite/list/", controller.FavoriteList)
 	apiRouter.POST("/comment/demo/add/", controller.AddCommentDemo)
-	apiRouter.POST("/comment/action/", controller.CommentAction)
-	apiRouter.GET("/comment/list/", controller.CommentList)
+	apiRouter.POST("/comment/action/", middleware.JwtMiddleware(), controller.CommentAction)
+	apiRouter.GET("/comment/list/", middleware.JwtMiddleware(), controller.CommentList)
 
 	// extra apis - II
 	apiRouter.POST("/relation/action/", controller.RelationAction)

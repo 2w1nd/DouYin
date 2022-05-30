@@ -47,7 +47,8 @@ func (cs *CommentService) AddComment(req request.CommentReq) ([]vo.CommentVo, bo
 	}
 	commentRet, _ := commentRepository.QueryCommentWithUserInfo(commentId)
 	commentList = append(commentList, commentRet)
-	global.REDIS.Del(context.Background(), strconv.FormatUint(req.VideoId, 10))
+	CommentString := "videoComment:comment"
+	global.REDIS.Del(context.Background(), CommentString+strconv.FormatUint(req.VideoId, 10))
 	return cs.commentList2Vo(commentList, req.VideoId), true
 }
 
@@ -63,7 +64,7 @@ func (cs *CommentService) DeleteComment(req request.CommentReq) bool {
 
 func (cs *CommentService) GetCommentList(videoId uint64) []vo.CommentVo {
 	var commentVos []vo.CommentVo
-	CommentString := "视频的ID为"
+	CommentString := "videoComment:comment"
 	fmt.Println(CommentString + strconv.FormatUint(videoId, 10))
 	data1, _ := global.REDIS.Get(context.Background(), CommentString+strconv.FormatUint(videoId, 10)).Result()
 	fmt.Println(data1)
