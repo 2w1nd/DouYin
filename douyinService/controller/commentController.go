@@ -1,16 +1,14 @@
 package controller
 
 import (
-	"github.com/DouYin/common/context"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/response"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 	"github.com/DouYin/service/service"
-	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
-	"log"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"strconv"
 )
@@ -38,18 +36,23 @@ func AddCommentDemo(c *gin.Context) {
 func CommentAction(c *gin.Context) {
 	var commentReq request.CommentReq
 	_ = c.ShouldBindQuery(&commentReq)
-	var userContext context.UserContext
-	userContext = utils.GetUserContext(c)
-	log.Println(userContext)
 	if commentReq.ActionType == 1 {
+		validate := validator.New()
+		err := validate.Struct(commentReq)
 		//添加评论
-		if CommentVos, err := commentService.AddComment(commentReq, userContext); !err {
-			response.FailWithMessage("创建失败", c)
+		if err != nil {
+			response.FailWithMessage("评论至少为2个文字", c)
+			// from here you can create your own error messages in whatever language you wish
+			return
 		} else {
-			c.JSON(http.StatusOK, vo.CommentRet{
-				Response: response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
-				Comment:  CommentVos[0],
-			})
+			if CommentVos, err := commentService.AddComment(commentReq); !err {
+				response.FailWithMessage("创建失败", c)
+			} else {
+				c.JSON(http.StatusOK, vo.CommentRet{
+					Response: response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
+					Comment:  CommentVos[0],
+				})
+			}
 		}
 	} else if commentReq.ActionType == 2 {
 		// 删除评论
@@ -67,10 +70,8 @@ func CommentAction(c *gin.Context) {
 // @Description: 查看视频的所有评论，按发布时间倒序
 // @param: c
 func CommentList(c *gin.Context) {
-	var userContext context.UserContext
-	userContext = utils.GetUserContext(c)
 	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
-	commentVos := commentService.GetCommentList(userContext, uint64(videoId))
+	commentVos := commentService.GetCommentList(uint64(videoId))
 	c.JSON(http.StatusOK, vo.CommentListVo{
 		Response:    response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
 		CommentList: commentVos,
