@@ -29,6 +29,7 @@ func (cr *CommentRepository) QueryCommentWithUserInfo(commentId uint64) (model.C
 	query := global.DB.
 		Model(model.Comment{}).
 		Where("comment_id = ?", commentId).
+		Order("gmt_created desc").
 		Preload("CommentUser")
 	query.Find(&comment)
 	return comment, true
@@ -36,9 +37,11 @@ func (cr *CommentRepository) QueryCommentWithUserInfo(commentId uint64) (model.C
 
 func (cr *CommentRepository) CommentListByVideoId(videoId uint64) ([]model.Comment, int64) {
 	var commentList []model.Comment
+
 	query := global.DB.Debug().
 		Model(model.Comment{}).
 		Where("video_id = ? and is_deleted != 1", videoId).
+		Order("gmt_created desc").
 		Preload("CommentUser")
 	rows := query.Find(&commentList).RowsAffected
 	return commentList, rows
