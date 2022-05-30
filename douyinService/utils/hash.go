@@ -37,3 +37,21 @@ func GetRandomString2(n int) string {
 	rand.Read(randBytes)
 	return fmt.Sprintf("%x", randBytes)
 }
+
+func Encrypt(password string) (string, string) {
+	// 生成盐
+	salt := GetRandomString2(22)
+	// 对密码进行加密
+	password = fmt.Sprintf("%x", md5.Sum([]byte(password+salt)))
+	return password, salt
+}
+
+func Analysis(password, salt string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(password+salt)))
+}
+
+func GetRandomString2(n int) string {
+	randBytes := make([]byte, n/2)
+	rand.Read(randBytes)
+	return fmt.Sprintf("%x", randBytes)
+}

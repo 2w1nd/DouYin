@@ -2,6 +2,7 @@ package utils
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/DouYin/common/context"
@@ -82,8 +83,8 @@ func JwtMiddleware() gin.HandlerFunc {
 			c.Abort() //阻止执行
 			return
 		}
-		c.Set("userID", tokenStruck.UserID)
-		c.Set("userName", tokenStruck.UserName)
+		c.Request.Header.Set("userId", strconv.FormatUint(tokenStruck.UserID, 10))
+		c.Request.Header.Set("userName", tokenStruck.UserName)
 		c.Next()
 	}
 }

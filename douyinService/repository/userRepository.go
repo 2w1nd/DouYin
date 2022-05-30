@@ -30,3 +30,30 @@ func (u UserRepository) IsFollow(src, dst uint64) bool {
 	query.Count(&count)
 	return count > 0
 }
+
+func (u UserRepository) CreateUser(user *model.User) (*model.User, error) {
+	err := global.DB.Raw("INSERT INTO douyin_user(user_id,name,username,password,salt) VALUES(?,?,?,?,?);",
+		user.UserId, user.Name, user.Username, user.Password, user.Salt).Scan(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (u UserRepository) GetUserByUserName(username string) (model.User, error) {
+	user := model.User{}
+	err := global.DB.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		return model.User{}, err
+	}
+	return user, nil
+}
+
+func (u UserRepository) GetfollowByUserId(userId, followerId uint64) (model.Follow, error) {
+	follow := model.Follow{}
+	err := global.DB.Where("user_id = ? AND followed_user_id = ?", userId, followerId).First(&follow).Error
+	if err != nil {
+		return model.Follow{}, err
+	}
+	return follow, nil
+}
