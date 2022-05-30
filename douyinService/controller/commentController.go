@@ -47,7 +47,7 @@ func CommentAction(c *gin.Context) {
 			return
 		} else {
 			if CommentVos, err := commentService.AddComment(commentReq, utils.GetUserContext(c)); !err {
-				response.FailWithMessage("创建失败", c)
+				response.FailWithMessage("评论失败", c)
 			} else {
 				c.JSON(http.StatusOK, vo.CommentRet{
 					Response: response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
