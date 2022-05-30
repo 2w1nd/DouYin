@@ -2,16 +2,15 @@ package utils
 
 import (
 	"github.com/DouYin/common/context"
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"strconv"
 )
 
 func GetUserContext(c *gin.Context) context.UserContext {
-	claims := jwt.ExtractClaims(c)
-	if claims["id"] == nil {
-		return context.UserContext{Id: 0}
+	userId, userName := c.GetHeader("userId"), c.GetHeader("userName")
+	if userId == "" || userName == "" {
+		return context.UserContext{Id: 0, Name: ""}
 	}
-	return context.UserContext{
-		Id: uint64(claims["id"].(float64)),
-	}
+	id, _ := strconv.Atoi(userId)
+	return context.UserContext{Id: uint64(id), Name: userName}
 }

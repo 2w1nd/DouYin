@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/DouYin/service/controller"
+	"github.com/DouYin/service/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,8 +16,8 @@ func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	apiRouter := r.Group("/douyin")
 
 	//// basic apis
-	apiRouter.GET("/feed/", controller.Feed)
-	apiRouter.GET("/user/", controller.UserInfo)
+	apiRouter.GET("/feed/", middleware.JwtMiddleware(), controller.Feed)
+	apiRouter.GET("/user/", middleware.JwtMiddleware(), controller.UserInfo)
 	apiRouter.POST("/user/register/", controller.Register)
 	apiRouter.POST("/user/login/", controller.Login)
 	apiRouter.POST("/publish/action/", controller.Publish)
