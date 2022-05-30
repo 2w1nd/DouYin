@@ -1,12 +1,16 @@
 package service
 
 import (
-	"github.com/DouYin/common/context"
+	"encoding/json"
+	"fmt"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 	"github.com/DouYin/service/repository"
+	"golang.org/x/net/context"
+	"log"
+	"strconv"
 )
 
 type CommentService struct {
@@ -24,16 +28,16 @@ func (cs *CommentService) AddCommentDemo(c model.Comment) (err error) {
 	return err
 }
 
-func (cs *CommentService) AddComment(req request.CommentReq, context context.UserContext) ([]vo.CommentVo, bool) {
+func (cs *CommentService) AddComment(req request.CommentReq) ([]vo.CommentVo, bool) {
 	var (
 		commentVos  []vo.CommentVo
 		commentList []model.Comment
 	)
-	userId := context.Id
+	userId := 0
 	commentId := uint64(global.ID.Generate())
 	comment := model.Comment{
 		CommentId: commentId,
-		UserId:    userId,
+		UserId:    uint64(userId),
 		VideoId:   req.VideoId,
 		Content:   req.CommentTest,
 	}
@@ -43,6 +47,8 @@ func (cs *CommentService) AddComment(req request.CommentReq, context context.Use
 	}
 	commentRet, _ := commentRepository.QueryCommentWithUserInfo(commentId)
 	commentList = append(commentList, commentRet)
+	CommentString := "videoComment:comment"
+	global.REDIS.Del(context.Background(), CommentString+strconv.FormatUint(req.VideoId, 10))
 	return cs.commentList2Vo(commentList, req.VideoId), true
 }
 
@@ -51,13 +57,33 @@ func (cs *CommentService) DeleteComment(req request.CommentReq) bool {
 	if isOk := commentRepository.DeleteCommentById(where); !isOk {
 		return false
 	}
+	// 放入缓存
+	global.REDIS.Del(context.Background(), strconv.FormatUint(req.VideoId, 10))
 	return true
 }
 
-func (cs *CommentService) GetCommentList(userContext context.UserContext, videoId uint64) []vo.CommentVo {
+func (cs *CommentService) GetCommentList(videoId uint64) []vo.CommentVo {
 	var commentVos []vo.CommentVo
-	commentList, _ := commentRepository.CommentListByVideoId(videoId)
-	commentVos = cs.commentList2Vo(commentList, videoId)
+	CommentString := "videoComment:comment"
+	fmt.Println(CommentString + strconv.FormatUint(videoId, 10))
+	data1, _ := global.REDIS.Get(context.Background(), CommentString+strconv.FormatUint(videoId, 10)).Result()
+	fmt.Println(data1)
+	if data1 != "" {
+		log.Println("从缓存中查询")
+		err := json.Unmarshal([]byte(data1), &commentVos)
+		if err != nil {
+			return nil
+		}
+
+	} else {
+		// 从数据库中查询
+		log.Println("从数据库中查询")
+		commentList, _ := commentRepository.CommentListByVideoId(videoId)
+		// 放入缓存
+		commentVos = cs.commentList2Vo(commentList, videoId)
+		data, _ := json.Marshal(commentVos)
+		global.REDIS.Set(context.Background(), CommentString+strconv.FormatUint(videoId, 10), data, 0)
+	}
 	return commentVos
 }
 
