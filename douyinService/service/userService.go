@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/DouYin/service/middleware"
 	"strconv"
 
 	"github.com/DouYin/common/model"
@@ -38,7 +39,7 @@ func (us *UserService) Register(user *model.User) (code int, msg, token string, 
 	}
 
 	// 注册成功，返回用户id和权限jwt token
-	token, err = utils.CreateToken(user.UserId, user.Username)
+	token, err = middleware.CreateToken(user.UserId, user.Username)
 	if err != nil {
 		return 500, err.Error(), "", 0
 	}
@@ -59,7 +60,7 @@ func (us *UserService) Login(username, password string) (code int, msg, token st
 
 	if user.Password == utils.Analysis(password, user.Salt) {
 		// 登录成功，返回用户id和权限jwt token
-		token, err = utils.CreateToken(user.UserId, user.Username)
+		token, err = middleware.CreateToken(user.UserId, user.Username)
 		if err != nil {
 			return 500, err.Error(), "", 0
 		}

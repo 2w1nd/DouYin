@@ -16,14 +16,14 @@ var userService service.UserService
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-	name := c.Query("name")
-	if username == "" || len(username) > 32 || password == "" || len(password) > 32 || name == "" || len(name) > 32 {
+	//name := c.Query("name")
+	if username == "" || len(username) > 32 || password == "" || len(password) > 32 {
 		rlHandler(c, 500, "参数错误", "", 0)
 		return
 	}
 	user := &model.User{
 		Username: username,
-		Name:     name,
+		Name:     username,
 		Password: password,
 		UserId:   uint64(time.Now().UnixNano()),
 	}

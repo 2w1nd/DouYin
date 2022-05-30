@@ -20,8 +20,6 @@ func Feed(c *gin.Context) {
 	var user context.UserContext
 	user = utils.GetUserContext(c)
 	latestTime := c.Query("latest_time")
-	log.Println(user.Id)
-	log.Println(c.GetHeader("userId"))
 	videoList, nextTime := feedService.Feed(user.Id, latestTime)
 	log.Println(nextTime)
 	c.JSON(http.StatusOK, vo.VideoListVo{

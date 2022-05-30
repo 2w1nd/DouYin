@@ -47,7 +47,7 @@ func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Ti
 	if id == 0 {
 		videoList = videoRepository.GetVideoWithAuthor(timeUtil.GetTimeStamp(latestTime))
 	} else {
-		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(timeUtil.GetTimeStamp(latestTime), 90071992547409929)
+		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(timeUtil.GetTimeStamp(latestTime), id)
 	}
 	if len(videoList) == 0 {
 		return []vo.VideoVo{}, time.Time{}
