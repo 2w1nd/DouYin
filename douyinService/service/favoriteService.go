@@ -32,7 +32,7 @@ func Time2Float(time time.Time) float64 {
 
 //记录用户点赞的视频id——zset(score为时间)
 func redisAddUserLikeVideos(favoriteInfo model.Favorite) *redis.IntCmd {
-	zsetKey := "user_like_videos" + strconv.Itoa(int(favoriteInfo.UserId))
+	zsetKey := "favorite:" + "user_like_videos:" + strconv.Itoa(int(favoriteInfo.UserId))
 
 	zsetScore := Time2Float(time.Now())
 	zsetMember := strconv.Itoa(int(favoriteInfo.VideoId))
@@ -59,7 +59,7 @@ func redisAddUserLikeVideos(favoriteInfo model.Favorite) *redis.IntCmd {
 //记录视频对应的点赞用户——bitmap
 func redisAddVideLikedByUsers(favoriteInfo model.Favorite) *redis.IntCmd {
 
-	bitmapKey := "video_likedby_users" + strconv.Itoa(int(favoriteInfo.UserId))
+	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(favoriteInfo.UserId))
 
 	var ok *redis.IntCmd
 	if favoriteInfo.IsDeleted == LIKE {
@@ -88,7 +88,7 @@ func (fs *FavoriteService) RedisAddFavorite(favoriteInfo model.Favorite) bool {
 
 func (fs *FavoriteService) RedisGetFavoriteList(userId int64) ([]int64, error) {
 	var zsetValues []int64
-	zsetKey := "user_like_videos" + strconv.Itoa(int(userId))
+	zsetKey := "favorite:" + "user_like_videos:" + strconv.Itoa(int(userId))
 	values, err := global.REDIS.ZRevRangeWithScores(ctx, zsetKey, 0, -1).Result()
 
 	if err != nil {
@@ -107,7 +107,7 @@ func (fs *FavoriteService) RedisGetFavoriteList(userId int64) ([]int64, error) {
 
 func (fs *FavoriteService) RedisGetVideoFavoriteCount(videoId int64) (int64, error) {
 
-	bitmapKey := "video_likedby_users" + strconv.Itoa(int(videoId))
+	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(videoId))
 	var favoriteCount *redis.BitCount
 	ans, err := global.REDIS.BitCount(ctx, bitmapKey, favoriteCount).Result()
 	return ans, err
