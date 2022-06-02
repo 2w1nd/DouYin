@@ -45,9 +45,9 @@ func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Ti
 	// 从数据库中查询
 	log.Println("从数据库中查询")
 	if id == 0 {
-		videoList = videoRepository.GetVideoWithAuthor(timeUtil.GetTimeStamp(latestTime))
+		videoList = videoRepository.GetVideoWithAuthor(timeUtil.UnixToTime(latestTime))
 	} else {
-		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(timeUtil.GetTimeStamp(latestTime), id)
+		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(timeUtil.UnixToTime(latestTime), id)
 	}
 	if len(videoList) == 0 {
 		return []vo.VideoVo{}, time.Time{}
@@ -56,7 +56,7 @@ func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Ti
 	videoVos = fs.videoList2Vo(videoList)
 	// 放入缓存
 	videoData.VideoList = videoVos
-	videoData.NextTime = videoList[0].GmtCreated.Unix()
+	videoData.NextTime = timeUtil.TimeToUnix(videoList[0].GmtCreated)
 	data, _ := json.Marshal(videoData)
 	global.REDIS.Set(context.Background(), "videoVos", data, 10*time.Minute)
 	return videoVos, videoList[0].GmtCreated
