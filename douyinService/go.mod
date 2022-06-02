@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/qiniu/go-sdk/v7 v7.12.1
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.9.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420

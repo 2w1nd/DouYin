@@ -71,8 +71,8 @@ func CommentAction(c *gin.Context) {
 // @Description: 查看视频的所有评论，按发布时间倒序
 // @param: c
 func CommentList(c *gin.Context) {
-	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
-	commentVos := commentService.GetCommentList(uint64(videoId))
+	videoId, _ := strconv.ParseUint(c.Query("video_id"), 10, 64)
+	commentVos := commentService.GetCommentList(videoId)
 	c.JSON(http.StatusOK, vo.CommentListVo{
 		Response:    response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
 		CommentList: commentVos,
