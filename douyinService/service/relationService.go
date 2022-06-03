@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/DouYin/common/constant"
 	"log"
 
 	"github.com/DouYin/common/entity/dto"
@@ -40,38 +41,52 @@ func (rs *RelationService) AddAction(req request.RelationReq, userid uint64) boo
 
 func (rs *RelationService) FollowList(userId uint64) []vo.UserVo {
 	var userList []vo.UserVo
-	followUsers, _ := followRepository.GetFollowUserWithUserId(userId)
+	followUsers, _ := followRepository.GetFollowedOrFollowUserWithUserId(userId, constant.Follow)
 	log.Println(followUsers)
 	for _, user := range followUsers {
-		log.Println(user.UserId)
+		log.Println(user.FollowedUserId)
 	}
-	userList = rs.userDto2UserVos(followUsers)
+	userList = rs.userDto2UserVos(followUsers, constant.Follow)
 	return userList
 }
 
 func (rs *RelationService) FollowerList(userId uint64) []vo.UserVo {
 	var userList []vo.UserVo
-	followedUsers, _ := followRepository.GetFollowedUserWithUserId(userId)
+	followedUsers, _ := followRepository.GetFollowedOrFollowUserWithUserId(userId, constant.Followed)
 	log.Println(followedUsers)
 	for _, user := range followedUsers {
 		log.Println(user.UserId)
 	}
-	userList = rs.userDto2UserVos(followedUsers)
+	userList = rs.userDto2UserVos(followedUsers, constant.Followed)
 	return userList
 }
 
-func (rs *RelationService) userDto2UserVos(followerUsers []dto.FollowDto) []vo.UserVo {
+func (rs *RelationService) userDto2UserVos(followerUsers []dto.FollowDto, Type int) []vo.UserVo {
 	var userVos []vo.UserVo
-	for _, user := range followerUsers {
-		var userVo vo.UserVo
-		userVo = vo.UserVo{
-			Id:            user.UserId,
-			Name:          user.Name,
-			FollowCount:   user.FollowCount,
-			FollowerCount: user.FollowerCount,
-			IsFollow:      user.FollowedB,
+	if Type == constant.Followed {
+		for _, user := range followerUsers {
+			var userVo vo.UserVo
+			userVo = vo.UserVo{
+				Id:            user.UserId,
+				Name:          user.Name,
+				FollowCount:   user.FollowCount,
+				FollowerCount: user.FollowerCount,
+				IsFollow:      user.FollowedB,
+			}
+			userVos = append(userVos, userVo)
 		}
-		userVos = append(userVos, userVo)
+	} else if Type == constant.Follow {
+		for _, user := range followerUsers {
+			var userVo vo.UserVo
+			userVo = vo.UserVo{
+				Id:            user.FollowedUserId,
+				Name:          user.Name,
+				FollowCount:   user.FollowCount,
+				FollowerCount: user.FollowerCount,
+				IsFollow:      user.FollowedB,
+			}
+			userVos = append(userVos, userVo)
+		}
 	}
 	return userVos
 }

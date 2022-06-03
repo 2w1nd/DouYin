@@ -1,5 +1,8 @@
 package constant
 
 const (
-	LoginSuccess = 0
+	Success = 0
+	FAIL    = 1
+	Followed = 101
+	Follow   = 102
 )

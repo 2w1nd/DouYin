@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/DouYin/common/constant"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/response"
 	"github.com/DouYin/common/entity/vo"
@@ -12,28 +13,29 @@ import (
 
 var relationService service.RelationService
 
+const (
+	FOCUS   = 1
+	NoFOCUS = 2
+)
+
 // RelationAction
 // @Description: 登录用户对其他用户进行关注或取消关注
 // @param: c
 func RelationAction(c *gin.Context) {
 	var relationReq request.RelationReq
 	_ = c.ShouldBindQuery(&relationReq)
-	userId := utils.String2Uint64(c.Query("user_id"))
-	if relationReq.IsDeleted == true {
-		if /*CommentVos,*/ err := relationService.RelationAction(relationReq, userId); !err {
+	user := utils.GetUserContext(c)
+	if relationReq.ActionType == NoFOCUS {
+		if /*CommentVos,*/ err := relationService.RelationAction(relationReq, user.Id); !err {
 			response.FailWithMessage("操作失败", c)
 		} else {
-			c.JSON(http.StatusOK, vo.CommentRet{
-				Response: response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
-			})
+			c.JSON(http.StatusOK, response.Response{StatusCode: constant.Success, StatusMsg: "操作成功"})
 		}
-	} else {
-		if /*CommentVos,*/ err := relationService.AddAction(relationReq, userId); !err {
+	} else if relationReq.ActionType == FOCUS {
+		if /*CommentVos,*/ err := relationService.AddAction(relationReq, user.Id); !err {
 			response.FailWithMessage("操作失败", c)
 		} else {
-			c.JSON(http.StatusOK, vo.CommentRet{
-				Response: response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
-			})
+			c.JSON(http.StatusOK, response.Response{StatusCode: constant.FAIL, StatusMsg: "操作成功"})
 		}
 	}
 }
