@@ -1,11 +1,13 @@
 package service
 
 import (
-	"github.com/DouYin/common/entity/dto"
-	"github.com/DouYin/common/entity/vo"
-	"github.com/DouYin/service/repository"
-	"github.com/gin-gonic/gin"
 	"log"
+
+	"github.com/DouYin/common/entity/dto"
+	"github.com/DouYin/common/entity/request"
+	"github.com/DouYin/common/entity/vo"
+	"github.com/DouYin/common/model"
+	"github.com/DouYin/service/repository"
 )
 
 var followRepository repository.FollowRepository
@@ -13,12 +15,38 @@ var followRepository repository.FollowRepository
 type RelationService struct {
 }
 
-func (rs *RelationService) RelationAction(c *gin.Context) {
-
+func (rs *RelationService) RelationAction(req request.RelationReq, userid uint64) bool {
+	where := model.Follow{
+		FollowedUserId: req.ToUserId,
+		UserId:         userid,
+	}
+	if isOk := followRepository.DeleteFollowUserId(where); !isOk {
+		return false
+	}
+	return true
 }
 
-func (rs *RelationService) FollowList(c *gin.Context) {
+func (rs *RelationService) AddAction(req request.RelationReq, userid uint64) bool {
+	follow := model.Follow{
+		UserId:         userid,
+		FollowedUserId: req.ToUserId,
+		IsDeleted:      false,
+	}
+	if isOk := followRepository.AddFollow(follow); !isOk {
+		return false
+	}
+	return true
+}
 
+func (rs *RelationService) FollowList(userId uint64) []vo.UserVo {
+	var userList []vo.UserVo
+	followUsers, _ := followRepository.GetFollowUserWithUserId(userId)
+	log.Println(followUsers)
+	for _, user := range followUsers {
+		log.Println(user.UserId)
+	}
+	userList = rs.userDto2UserVos(followUsers)
+	return userList
 }
 
 func (rs *RelationService) FollowerList(userId uint64) []vo.UserVo {
