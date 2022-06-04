@@ -15,6 +15,7 @@ func RunWindowsServer() {
 	global.REDIS = initialize.Redis()
 	initialize.Redis()
 	initialize.Snowflake()
+	initialize.Cron()
 	Router := initialize.Routers() // 初始化路由
 
 	address := fmt.Sprintf(":%d", global.CONFIG.System.Addr)
