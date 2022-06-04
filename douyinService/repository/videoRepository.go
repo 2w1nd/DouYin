@@ -86,7 +86,7 @@ func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
 
 func (v *VideoRepository) GetVideoByVideoId(videoId uint64) model.Video {
 	video := model.Video{}
-	query := global.DB.Debug().Model(model.Video{}).Where("video_id = ?", videoId)
+	query := global.DB.Debug().Model(model.Video{}).Preload("User").Where("video_id = ?", videoId)
 	query.Find(&video)
 	return video
 }
