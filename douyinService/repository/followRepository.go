@@ -13,7 +13,21 @@ type FollowRepository struct {
 }
 
 func (r *FollowRepository) AddFollow(follow model.Follow) bool {
+	where := model.Follow{
+		FollowedUserId: follow.FollowedUserId,
+	}
+	if err := global.DB.Where(where).Error; err != nil {
+		return false
+	}
 	if err := r.Base.Create(&follow); err != nil {
+		return false
+	}
+	return true
+}
+
+func (r *FollowRepository) UpdateFollowUserId(where interface{}, out interface{}) bool {
+	db := global.DB.Where(where)
+	if err := db.Model(out).Where(where).Update("is_deleted", 0).Error; err != nil {
 		return false
 	}
 	return true
