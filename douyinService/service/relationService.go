@@ -28,13 +28,21 @@ func (rs *RelationService) RelationAction(req request.RelationReq, userid uint64
 }
 
 func (rs *RelationService) AddAction(req request.RelationReq, userid uint64) bool {
-	follow := model.Follow{
-		UserId:         userid,
+	where := model.Follow{
 		FollowedUserId: req.ToUserId,
-		IsDeleted:      false,
+		UserId:         userid,
 	}
-	if isOk := followRepository.AddFollow(follow); !isOk {
-		return false
+
+	var out model.Follow
+	if isOk := followRepository.UpdateFollowUserId(where, &out); !isOk {
+		follow := model.Follow{
+			UserId:         userid,
+			FollowedUserId: req.ToUserId,
+			IsDeleted:      false,
+		}
+		if IsOk := followRepository.AddFollow(follow); !IsOk {
+			return false
+		}
 	}
 	return true
 }
