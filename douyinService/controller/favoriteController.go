@@ -7,9 +7,9 @@ import (
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/service"
+	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/martian/log"
-	"net/http"
 	"strconv"
 )
 
@@ -32,11 +32,13 @@ func FavoriteAction(c *gin.Context) {
 	}
 	fmt.Println("favoriteReq: ", favoriteReq)
 
+	user := utils.GetUserContext(c)
+
 	var favoriteInfo model.Favorite
 	var isDeleted bool
 
 	favoriteInfo = model.Favorite{
-		UserId:    uint64(favoriteReq.UserId),
+		UserId:    user.Id,
 		VideoId:   uint64(favoriteReq.VideoId),
 		IsDeleted: isDeleted,
 	}
@@ -52,17 +54,17 @@ func FavoriteAction(c *gin.Context) {
 		//存入Redis
 		ok = favoriteService.RedisAddFavorite(favoriteInfo)
 		if ok == true {
-			c.JSON(0, response.Response{http.StatusOK, "点赞成功"})
+			c.JSON(0, response.Response{response.SUCCESS, "点赞成功"})
 		} else {
-			c.JSON(-1, response.Response{http.StatusOK, "点赞失败"})
+			c.JSON(-1, response.Response{response.ERROR, "点赞失败"})
 		}
 	} else {
 		//从Redis中删除
 		ok = favoriteService.RedisDeleteFavorite(favoriteInfo)
 		if ok == true {
-			c.JSON(0, response.Response{http.StatusOK, "取消赞成功"})
+			c.JSON(0, response.Response{response.SUCCESS, "取消赞成功"})
 		} else {
-			c.JSON(-1, response.Response{http.StatusOK, "取消赞失败"})
+			c.JSON(-1, response.Response{response.ERROR, "取消赞失败"})
 		}
 	}
 
@@ -76,19 +78,19 @@ func FavoriteList(c *gin.Context) {
 	fmt.Println("userId:", userId)
 
 	if err != nil {
-		c.JSON(http.StatusOK, vo.FavoriteListVo{
+		c.JSON(response.ERROR, vo.FavoriteListVo{
 			Response: response.Response{-1, "操作失败"},
 		})
 	}
 	//在Redis中查询并返回
 	videos, err := favoriteService.GetFavoriteList(userId)
 	if err != nil {
-		c.JSON(http.StatusOK, vo.FavoriteListVo{
+		c.JSON(response.ERROR, vo.FavoriteListVo{
 			Response: response.Response{-1, "操作失败"},
 		})
 	}
 
-	c.JSON(http.StatusOK, vo.FavoriteListVo{
+	c.JSON(response.SUCCESS, vo.FavoriteListVo{
 		Response:  response.Response{0, "操作成功"},
 		VideoList: videos,
 	})

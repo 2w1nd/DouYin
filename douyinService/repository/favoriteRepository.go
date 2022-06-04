@@ -3,13 +3,14 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
+	"log"
 )
 
 type FavoriteRepository struct {
 	Base BaseRepository
 }
 
-func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId int64, videoId int64) (bool, model.Favorite) {
+func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId uint64, videoId uint64) (bool, model.Favorite) {
 	var count int64
 	var favorite model.Favorite
 	query := global.DB.Model(model.Favorite{}).Where("user_id=? and video_id=?", userId, videoId)
@@ -22,6 +23,7 @@ func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId int64, videoI
 	}
 }
 func (fr *FavoriteRepository) AddFavorite(favorite model.Favorite) bool {
+	log.Println("添加到数据库")
 	if err := fr.Base.Create(&favorite); err != nil {
 		return false
 	}

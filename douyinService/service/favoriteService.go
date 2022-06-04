@@ -7,7 +7,9 @@ import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 	"github.com/DouYin/service/repository"
+	"github.com/DouYin/service/utils"
 	"github.com/go-redis/redis/v8"
+	"log"
 	"strconv"
 	"time"
 )
@@ -327,23 +329,27 @@ func (fs *FavoriteService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 }
 
 func SynchronizeDBAndRedis() {
-
+	log.Println("同步redis到数据库")
 	zsetkey, err := global.REDIS.Keys(ctx, "favorite:"+"user_like_videos:*").Result()
+	log.Println(zsetkey)
 	if err != nil {
 		return
 	}
-	var FavoritevideoIds []string
-	for userId := range zsetkey {
-		FavoritevideoIds, err = global.REDIS.ZRange(ctx, strconv.Itoa(userId), 0, -1).Result()
-		for videoId := range FavoritevideoIds {
+	var FavoriteVideoIds []string
+	for _, userId := range zsetkey {
+		FavoriteVideoIds, err = global.REDIS.ZRange(ctx, userId, 0, -1).Result()
+		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
+		log.Println("like", uid)
+		for _, videoId := range FavoriteVideoIds {
 			var ok bool
-			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(int64(userId), int64(videoId))
+			vid := utils.String2Uint64(videoId)
+			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(uid, vid)
 			if ok {
 				return
 			}
 			favoriteRepository.AddFavorite(model.Favorite{
-				UserId:    uint64(userId),
-				VideoId:   uint64(videoId),
+				UserId:    uid,
+				VideoId:   vid,
 				IsDeleted: true,
 			})
 		}
@@ -355,18 +361,22 @@ func SynchronizeDBAndRedis() {
 		return
 	}
 	var UnFavoritevideoIds []string
-	for userId := range zsetkey {
-		UnFavoritevideoIds, err = global.REDIS.ZRange(ctx, strconv.Itoa(userId), 0, -1).Result()
-		for videoId := range UnFavoritevideoIds {
+	for _, userId := range zsetkey {
+		UnFavoritevideoIds, err = global.REDIS.ZRange(ctx, userId, 0, -1).Result()
+		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
+		log.Println("unlike:", uid)
+		for _, videoId := range UnFavoritevideoIds {
+			log.Println("unlike", videoId)
 			var ok bool
-			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(int64(userId), int64(videoId))
+			vid := utils.String2Uint64(videoId)
+			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(uid, vid)
 			if ok {
 				return
 			}
 			favoriteRepository.AddFavorite(model.Favorite{
-				UserId:    uint64(userId),
-				VideoId:   uint64(videoId),
-				IsDeleted: true,
+				UserId:    uid,
+				VideoId:   vid,
+				IsDeleted: false,
 			})
 		}
 
