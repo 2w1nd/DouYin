@@ -3,13 +3,17 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
+	"github.com/DouYin/service/service"
 	"gorm.io/gorm/clause"
 	"log"
+	"strconv"
 )
 
 type FavoriteRepository struct {
 	Base BaseRepository
 }
+
+var favoriteService service.FavoriteService
 
 func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId uint64, videoId uint64) (bool, model.Favorite) {
 	var count int64
@@ -39,4 +43,12 @@ func (fr *FavoriteRepository) DeleteFavoriteById(where interface{}) bool {
 		return false
 	}
 	return true
+}
+
+//根据VideoId查询对应Video点赞数量，并存入数据库
+func (fr *FavoriteRepository) SaveFavoriteCount(videoId string) error {
+	id, err := strconv.ParseInt(videoId, 10, 64)
+	ans, err := favoriteService.RedisGetVideoFavoriteCount(id)
+	global.DB.Update("favorite_count", ans)
+	return err
 }

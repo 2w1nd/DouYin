@@ -267,7 +267,6 @@ func (fs *FavoriteService) RedisGetVideoFavoriteCount(videoId int64) (int64, err
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(videoId))
 	var favoriteCount *redis.BitCount
 	ans, err := global.REDIS.BitCount(ctx, bitmapKey, favoriteCount).Result()
-	global.DB.Model(&model.Video{}).Update("favorite_count", ans)
 	return ans, err
 }
 
@@ -354,6 +353,8 @@ func SynchronizeDBAndRedis() {
 				VideoId:   vid,
 				IsDeleted: true,
 			})
+
+			favoriteRepository.SaveFavoriteCount(videoId)
 		}
 
 	}
