@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
@@ -28,7 +27,8 @@ const (
 
 var (
 	favoriteRepository repository.FavoriteRepository
-	ctx                = context.Background()
+	//videoRepository repository.VideoRepository
+	ctx = context.Background()
 )
 
 type FavoriteService struct {
@@ -50,12 +50,12 @@ func redisAddUserLikeVideos(favoriteInfo model.Favorite) int {
 	_, err := global.REDIS.ZRank(ctx, zsetKey, zsetMember).Result()
 	//未找到对应的key或未找到对应的key和value,返回err=redis:null
 	if err == redis.Nil {
-		fmt.Println("error", err)
+		//fmt.Println("error", err)
 		_, err = global.REDIS.ZAdd(ctx, zsetKey, zsetValue).Result()
 
-		fmt.Println("redisAddUserLikeVideos", 0)
+		//fmt.Println("redisAddUserLikeVideos", 0)
 		if err != nil {
-			fmt.Println("redisAddUserLikeVideos", 1)
+			//fmt.Println("redisAddUserLikeVideos", 1)
 			return ERROR
 		}
 		return SUCCESS
@@ -64,7 +64,7 @@ func redisAddUserLikeVideos(favoriteInfo model.Favorite) int {
 	} else {
 		//key和value已存在
 
-		fmt.Println("redisAddUserLikeVideos", 2)
+		//fmt.Println("redisAddUserLikeVideos", 2)
 		return ALREADYEXIST
 
 		return SUCCESS
@@ -106,17 +106,18 @@ func (fs *FavoriteService) RedisIsUserLikeVideosCreated(userId int64, videoId in
 	ok, err := global.REDIS.GetBit(ctx, bitmapKey, userId).Result()
 	//查询失败
 	if err != nil {
-		fmt.Println("RedisIsUserLikeVideosCreated", 1)
+		//fmt.Println("RedisIsUserLikeVideosCreated", 1)
 		return ERROR
 	}
 
 	//返回查询到的结果
 	if ok == 1 {
-		fmt.Println("RedisIsUserLikeVideosCreated", 2)
+		//fmt.Println("RedisIsUserLikeVideosCreated", 2)
+
 		return BITMAPLIKE
 	} else {
 		//未记录过或值为0
-		fmt.Println("RedisIsUserLikeVideosCreated", 2)
+		//fmt.Println("RedisIsUserLikeVideosCreated", 2)
 		return BITMAPUNLIKE
 	}
 
@@ -266,6 +267,7 @@ func (fs *FavoriteService) RedisGetVideoFavoriteCount(videoId int64) (int64, err
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(videoId))
 	var favoriteCount *redis.BitCount
 	ans, err := global.REDIS.BitCount(ctx, bitmapKey, favoriteCount).Result()
+	global.DB.Model(&model.Video{}).Update("favorite_count", ans)
 	return ans, err
 }
 
@@ -279,7 +281,7 @@ func (fs *FavoriteService) GetFavoriteList(userId int64) ([]vo.VideoVo, error) {
 	if err != nil {
 		return videoVoList, err
 	}
-	fmt.Println("videoIds::", videoIds)
+	//fmt.Println("videoIds::", videoIds)
 	for _, id := range videoIds {
 		videoList = append(videoList, videoRepository.GetVideoByVideoId(uint64(id)))
 	}
@@ -355,14 +357,14 @@ func SynchronizeDBAndRedis() {
 		}
 
 	}
-
-	zsetkey, err = global.REDIS.Keys(ctx, "favorite:"+"user_unlike_videos:*").Result()
+	var setkey []string
+	setkey, err = global.REDIS.Keys(ctx, "favorite:"+"user_unlike_videos:*").Result()
 	if err != nil {
 		return
 	}
 	var UnFavoritevideoIds []string
-	for _, userId := range zsetkey {
-		UnFavoritevideoIds, err = global.REDIS.ZRange(ctx, userId, 0, -1).Result()
+	for _, userId := range setkey {
+		UnFavoritevideoIds, err = global.REDIS.SMembers(ctx, userId).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
 		log.Println("unlike:", uid)
 		for _, videoId := range UnFavoritevideoIds {

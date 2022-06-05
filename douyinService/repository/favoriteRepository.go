@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
+	"gorm.io/gorm/clause"
 	"log"
 )
 
@@ -24,7 +25,10 @@ func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId uint64, video
 }
 func (fr *FavoriteRepository) AddFavorite(favorite model.Favorite) bool {
 	log.Println("添加到数据库")
-	if err := fr.Base.Create(&favorite); err != nil {
+	if err := global.DB.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}, {Name: "video_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"is_deleted"}),
+	}).Create(&favorite); err != nil {
 		return false
 	}
 	return true
