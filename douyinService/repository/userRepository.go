@@ -20,7 +20,7 @@ func (u UserRepository) QueryUserDtoInfo(userId uint64) model.User {
 	return user
 }
 
-func (u UserRepository) UpdateFollowCount(userId uint64, cnt uint32) bool {
+func (u UserRepository) UpdateFollowCount(userId uint64, cnt int32) bool {
 	var user model.User
 	query := global.DB.Debug().
 		Model(model.User{})
@@ -29,13 +29,19 @@ func (u UserRepository) UpdateFollowCount(userId uint64, cnt uint32) bool {
 	query.Find(&user)
 	db := global.DB.Where(user)
 	var out model.User
-	if err := db.Model(out).Where(user).Update("follow_count", user.FollowCount+cnt).Error; err != nil {
+	var Cnt uint32
+	if cnt > 0 {
+		Cnt = uint32(cnt)
+	} else {
+		Cnt = uint32(-cnt)
+	}
+	if err := db.Model(out).Where(user).Update("follow_count", user.FollowCount+Cnt).Error; err != nil {
 		return false
 	}
 	return true
 }
 
-func (u UserRepository) UpdateFollowerCount(userId uint64, cnt uint32) bool {
+func (u UserRepository) UpdateFollowerCount(userId uint64, cnt int32) bool {
 	var user model.User
 	query := global.DB.Debug().
 		Model(model.User{})
@@ -44,7 +50,13 @@ func (u UserRepository) UpdateFollowerCount(userId uint64, cnt uint32) bool {
 	query.Find(&user)
 	db := global.DB.Where(user)
 	var out model.User
-	if err := db.Model(out).Where(user).Update("follower_count", user.FollowerCount+cnt).Error; err != nil {
+	var Cnt uint32
+	if cnt > 0 {
+		Cnt = uint32(cnt)
+	} else {
+		Cnt = uint32(-cnt)
+	}
+	if err := db.Model(out).Where(user).Update("follower_count", user.FollowerCount+Cnt).Error; err != nil {
 		return false
 	}
 	return true
