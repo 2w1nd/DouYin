@@ -10,17 +10,18 @@ import (
 
 type FollowRepository struct {
 	Base BaseRepository
+	User UserRepository
 }
 
 func (r *FollowRepository) AddFollow(follow model.Follow) bool {
 	where := model.Follow{
 		FollowedUserId: follow.FollowedUserId,
 	}
-	var out model.Follow
-	db := global.DB.Where(where)
-	if err := db.First(out).Error; err != nil {
+
+	if _, err := r.User.GetFirstUser(where); err != nil {
 		return false
 	}
+
 	if err := r.Base.Create(&follow); err != nil {
 		return false
 	}
