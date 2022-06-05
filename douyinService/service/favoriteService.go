@@ -67,7 +67,6 @@ func redisAddUserLikeVideos(favoriteInfo model.Favorite) int {
 		//fmt.Println("redisAddUserLikeVideos", 2)
 		return ALREADYEXIST
 
-		return SUCCESS
 	}
 
 }
@@ -354,7 +353,6 @@ func SynchronizeDBAndRedis() {
 				IsDeleted: true,
 			})
 
-			favoriteRepository.SaveFavoriteCount(videoId)
 		}
 
 	}
@@ -383,6 +381,15 @@ func SynchronizeDBAndRedis() {
 			})
 		}
 
+	}
+	var bitmapkey []string
+	bitmapkey, err = global.REDIS.Keys(ctx, "favorite:"+"video_likedby_users:*").Result()
+	for _, videoId := range bitmapkey {
+		vid := utils.String2Uint64(utils.SplitString(videoId, ":"))
+		err := favoriteRepository.SaveFavoriteCount(strconv.Itoa(int(vid)))
+		if err != nil {
+			return
+		}
 	}
 
 }
