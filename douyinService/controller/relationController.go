@@ -8,15 +8,13 @@ import (
 	"github.com/DouYin/service/service"
 	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
 var relationService service.RelationService
 
-const (
-	FOCUS   = 1
-	NoFOCUS = 2
-)
+const ()
 
 // RelationAction
 // @Description: 登录用户对其他用户进行关注或取消关注
@@ -25,17 +23,19 @@ func RelationAction(c *gin.Context) {
 	var relationReq request.RelationReq
 	_ = c.ShouldBindQuery(&relationReq)
 	user := utils.GetUserContext(c)
-	if relationReq.ActionType == NoFOCUS {
+	if relationReq.ActionType == constant.NoFOCUS {
+		log.Println("取消关注")
 		if /*CommentVos,*/ err := relationService.RelationAction(relationReq, user.Id); !err {
-			response.FailWithMessage("操作失败", c)
+			response.FailWithMessage("取消关注失败", c)
 		} else {
-			c.JSON(http.StatusOK, response.Response{StatusCode: constant.Success, StatusMsg: "操作成功"})
+			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "取消关注成功"})
 		}
-	} else if relationReq.ActionType == FOCUS {
+	} else if relationReq.ActionType == constant.FOCUS {
+		log.Println("关注")
 		if /*CommentVos,*/ err := relationService.AddAction(relationReq, user.Id); !err {
-			response.FailWithMessage("操作失败", c)
+			response.FailWithMessage("关注失败", c)
 		} else {
-			c.JSON(http.StatusOK, response.Response{StatusCode: constant.FAIL, StatusMsg: "操作成功"})
+			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "关注成功"})
 		}
 	}
 }
