@@ -176,22 +176,17 @@ func redisDeleteUserUnLikeVideos(favoriteInfo model.Favorite) int {
 
 //点赞后，bitmap将该UserId位置1 方向:Video->Users
 func redisAddVideoLikedByUsers(favoriteInfo model.Favorite) int {
-
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(favoriteInfo.VideoId))
-
 	_, err := global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId)%4294967296, 1).Result()
 	if err != nil {
 		return ERROR
 	}
 	return SUCCESS
-
 }
 
 //取消赞后，bitmap将该UserId位置0 方向:Video->Users
 func redisDeleteVideoLikedByUsers(favoriteInfo model.Favorite) int {
-
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(favoriteInfo.VideoId))
-
 	_, err := global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId)%4294967296, 0).Result()
 	if err != nil {
 		//fmt.Println("redisDeleteVideoLikedByUsers", 1)
@@ -199,12 +194,10 @@ func redisDeleteVideoLikedByUsers(favoriteInfo model.Favorite) int {
 	}
 	//fmt.Println("redisDeleteVideoLikedByUsers", 0)
 	return SUCCESS
-
 }
 
 //进行点赞后Redis操作
 func (fs *FavoriteService) RedisAddFavorite(favoriteInfo model.Favorite) bool {
-
 	var ok int
 	//后面加锁，保证原子性
 	if ok = redisDeleteUserUnLikeVideos(favoriteInfo); ok == ERROR {
@@ -216,14 +209,11 @@ func (fs *FavoriteService) RedisAddFavorite(favoriteInfo model.Favorite) bool {
 	if ok = redisAddVideoLikedByUsers(favoriteInfo); ok == ERROR {
 		return false
 	}
-
 	return true
-
 }
 
 //取消赞后Redis操作
 func (fs *FavoriteService) RedisDeleteFavorite(favoriteInfo model.Favorite) bool {
-
 	var ok int
 	//后面加锁，保证原子性
 	if ok = redisAddUserUnLikeVideos(favoriteInfo); ok == ERROR {
@@ -235,9 +225,7 @@ func (fs *FavoriteService) RedisDeleteFavorite(favoriteInfo model.Favorite) bool
 	if ok = redisDeleteVideoLikedByUsers(favoriteInfo); ok == ERROR {
 		return false
 	}
-
 	return true
-
 }
 
 func (fs *FavoriteService) RedisGetFavoriteList(userId int64) ([]int64, error) {
@@ -341,13 +329,8 @@ func SynchronizeDBAndRedis() {
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
 		log.Println("like", uid)
 		for _, videoId := range FavoriteVideoIds {
-			var ok bool
 			log.Println("like video:", videoId)
 			vid := utils.String2Uint64(videoId)
-			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(uid, vid)
-			if ok {
-				break
-			}
 			favoriteRepository.AddFavorite(model.Favorite{
 				UserId:    uid,
 				VideoId:   vid,
@@ -370,12 +353,7 @@ func SynchronizeDBAndRedis() {
 		log.Println("unlike:", uid)
 		for _, videoId := range UnFavoritevideoIds {
 			log.Println("unlike videoId:", videoId)
-			var ok bool
 			vid := utils.String2Uint64(videoId)
-			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(uid, vid)
-			if ok {
-				break
-			}
 			favoriteRepository.AddFavorite(model.Favorite{
 				UserId:    uid,
 				VideoId:   vid,

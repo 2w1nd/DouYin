@@ -5,6 +5,10 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+/**
+ * * /5 * * * * * 每5秒一次
+ */
+
 func Cron() {
 	c := cron.New()
 	// 每5分钟执行一次
