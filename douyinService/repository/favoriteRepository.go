@@ -49,6 +49,6 @@ func (fr *FavoriteRepository) DeleteFavoriteById(where interface{}) bool {
 func (fr *FavoriteRepository) SaveFavoriteCount(videoId string) error {
 	id, err := strconv.ParseInt(videoId, 10, 64)
 	ans, err := favoriteService.RedisGetVideoFavoriteCount(id)
-	global.DB.Update("favorite_count", ans)
+	global.DB.Model(model.Video{}).Update("favorite_count", ans)
 	return err
 }
