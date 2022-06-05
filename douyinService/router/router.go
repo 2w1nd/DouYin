@@ -31,7 +31,7 @@ func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	apiRouter.GET("/comment/list/", middleware.JwtMiddleware(), controller.CommentList)
 
 	// extra apis - II
-	apiRouter.POST("/relation/action/", controller.RelationAction)
+	apiRouter.POST("/relation/action/", middleware.JwtMiddleware(), controller.RelationAction)
 	apiRouter.GET("/relation/follow/list/", controller.FollowList)
 	apiRouter.GET("/relation/follower/list/", controller.FollowerList)
 }
