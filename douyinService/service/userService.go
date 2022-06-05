@@ -85,7 +85,7 @@ func (us *UserService) UserInfo(id string, myuserId string) (code int, msg strin
 	if err != nil {
 		return 500, err.Error(), UserMsg{}
 	}
-	_, err = userRepository.GetfollowByUserId(uint64(myid), user.UserId)
+	_, err = userRepository.GetFollowByUserId(uint64(myid), user.UserId)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return 0, "未关注", UserMsg{

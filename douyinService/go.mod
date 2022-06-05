@@ -20,6 +20,7 @@ require (
 	github.com/spf13/viper v1.9.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	gorm.io/driver/mysql v1.1.2
 	gorm.io/gorm v1.21.16
 )
