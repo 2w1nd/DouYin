@@ -58,7 +58,7 @@ func (u UserRepository) GetUserByUserName(username string) (model.User, error) {
 	return user, nil
 }
 
-func (u UserRepository) GetfollowByUserId(userId, followerId uint64) (model.Follow, error) {
+func (u UserRepository) GetFollowByUserId(userId, followerId uint64) (model.Follow, error) {
 	follow := model.Follow{}
 	err := global.DB.Where("user_id = ? AND followed_user_id = ?", userId, followerId).First(&follow).Error
 	if err != nil {

@@ -54,7 +54,7 @@ func (cs *CommentService) AddComment(req request.CommentReq, ctx context2.UserCo
 
 func (cs *CommentService) DeleteComment(req request.CommentReq) bool {
 	where := model.Comment{CommentId: req.CommentId}
-	if isOk := commentRepository.DeleteCommentById(where); !isOk {
+	if isOk := commentRepository.DeleteCommentById(where, req.VideoId); !isOk {
 		return false
 	}
 	// 放入缓存

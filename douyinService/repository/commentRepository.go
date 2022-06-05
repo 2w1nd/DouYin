@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
+	"log"
 )
 
 type CommentRepository struct {
@@ -10,17 +11,33 @@ type CommentRepository struct {
 }
 
 func (cr *CommentRepository) AddComment(comment model.Comment) bool {
+	log.Println("数据库写入评论")
 	if err := cr.Base.Create(&comment); err != nil {
 		return false
 	}
+	var preComment model.Video
+	query := global.DB.Model(model.Video{}).
+		Where("video_id =?", comment.VideoId)
+	query.Find(&preComment)
+	global.DB.Model(model.Video{}).
+		Where("video_id = ?", comment.VideoId).
+		Update("comment_count", preComment.CommentCount+1)
 	return true
 }
 
-func (cr *CommentRepository) DeleteCommentById(where interface{}) bool {
+func (cr *CommentRepository) DeleteCommentById(where interface{}, id uint64) bool {
+	log.Println("数据库删除评论")
 	var comment model.Comment
 	if err := cr.Base.DeleteSoftByID(where, &comment); err != nil {
 		return false
 	}
+	var preComment model.Video
+	query := global.DB.Model(model.Video{}).
+		Where("video_id=?", id)
+	query.Find(&preComment)
+	global.DB.Model(model.Video{}).Debug().
+		Where("video_id=?", id).
+		Update("comment_count", preComment.CommentCount-1)
 	return true
 }
 

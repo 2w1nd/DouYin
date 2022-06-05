@@ -4,6 +4,8 @@ import (
 	"github.com/DouYin/service/controller"
 	"github.com/DouYin/service/middleware"
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
 )
 
 type Router struct {
@@ -34,4 +36,10 @@ func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	apiRouter.POST("/relation/action/", middleware.JwtMiddleware(), controller.RelationAction)
 	apiRouter.GET("/relation/follow/list/", controller.FollowList)
 	apiRouter.GET("/relation/follower/list/", controller.FollowerList)
+
+	apiRouter.GET("/ping/", middleware.NewLimiter(3, 10, 500*time.Millisecond), func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+
+	})
+
 }
