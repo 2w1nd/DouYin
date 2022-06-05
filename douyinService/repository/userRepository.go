@@ -20,6 +20,36 @@ func (u UserRepository) QueryUserDtoInfo(userId uint64) model.User {
 	return user
 }
 
+func (u UserRepository) UpdateFollowCount(userId uint64, cnt uint32) bool {
+	var user model.User
+	query := global.DB.Debug().
+		Model(model.User{})
+	query.Select("id", "user_id", "name", "follow_count", "follower_count").
+		Where("user_id = ?", userId).Limit(1)
+	query.Find(&user)
+	db := global.DB.Where(user)
+	var out model.User
+	if err := db.Model(out).Where(user).Update("follow_count", user.FollowCount+cnt).Error; err != nil {
+		return false
+	}
+	return true
+}
+
+func (u UserRepository) UpdateFollowerCount(userId uint64, cnt uint32) bool {
+	var user model.User
+	query := global.DB.Debug().
+		Model(model.User{})
+	query.Select("id", "user_id", "name", "follow_count", "follower_count").
+		Where("user_id = ?", userId).Limit(1)
+	query.Find(&user)
+	db := global.DB.Where(user)
+	var out model.User
+	if err := db.Model(out).Where(user).Update("follower_count", user.FollowerCount+cnt).Error; err != nil {
+		return false
+	}
+	return true
+}
+
 // IsFollow 判断关注关系
 // src 源 dst 目标
 func (u UserRepository) IsFollow(src, dst uint64) bool {
