@@ -3,8 +3,7 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
-	"gorm.io/gorm/clause"
-	"log"
+	"gorm.io/gorm"
 )
 
 type FavoriteRepository struct {
@@ -24,12 +23,30 @@ func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId uint64, video
 	}
 }
 func (fr *FavoriteRepository) AddFavorite(favorite model.Favorite) bool {
-	log.Println("添加到数据库: is_del: ", favorite.IsDeleted)
-	if err := global.DB.Debug().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "user_id"}, {Name: "video_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"is_deleted"}),
-	}).Create(&favorite); err != nil {
-		return false
+	//log.Println("添加到数据库: is_del: ", favorite.IsDeleted)
+	//if err := global.DB.Debug().Clauses(clause.OnConflict{
+	//	Columns:   []clause.Column{{Name: "user_id"}, {Name: "video_id"}},
+	//	DoUpdates: clause.AssignmentColumns([]string{"is_deleted"}),
+	//}).Create(&favorite); err != nil {
+	//	return false
+	//}
+	//return true
+
+	var favoriteInfo model.Favorite
+	result := global.DB.Model(model.Favorite{}).Where("user_id =?and video_id =?", favorite.UserId, favorite.VideoId).First(&favoriteInfo)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			result := global.DB.Model(model.Favorite{}).Create(&favorite)
+			if result.Error != nil {
+				return false
+			}
+		} else {
+
+			result := global.DB.Model(model.Comment{}).Where("user_id=?ans video id=?", favorite.UserId, favorite.VideoId).Update("is_deleted", favorite.IsDeleted)
+			if result.Error != nil {
+				return false
+			}
+		}
 	}
 	return true
 }
