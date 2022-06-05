@@ -77,7 +77,7 @@ func (fs *FeedService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 			isFollow = false
 		}
 		if len(video.Favorite) != 0 {
-			isFavorite = video.Favorite[0].IsDeleted
+			isFavorite = false
 		} else {
 			isFavorite = false
 		}
