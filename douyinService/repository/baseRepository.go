@@ -15,7 +15,7 @@ func (b *BaseRepository) Create(value interface{}) error {
 }
 
 // Save
-// @Description: 删除实体
+// @Description: 修改实体
 // @receiver: b
 // @param: value
 // @return: error

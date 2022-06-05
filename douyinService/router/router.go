@@ -23,10 +23,10 @@ func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	apiRouter.POST("/user/register/", controller.Register)
 	apiRouter.POST("/user/login/", controller.Login)
 	apiRouter.POST("/publish/action/", middleware.JwtMiddleware(), controller.Publish)
-	apiRouter.GET("/publish/list/", middleware.JwtMiddleware(), controller.PublishList)
+	apiRouter.GET("/publish/list/", controller.PublishList)
 
 	// extra apis - I
-	apiRouter.POST("/favorite/action/", controller.FavoriteAction)
+	apiRouter.POST("/favorite/action/", middleware.JwtMiddleware(), controller.FavoriteAction)
 	apiRouter.GET("/favorite/list/", controller.FavoriteList)
 	apiRouter.POST("/comment/demo/add/", controller.AddCommentDemo)
 	apiRouter.POST("/comment/action/", middleware.JwtMiddleware(), controller.CommentAction)

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/DouYin/common/constant"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 )
@@ -18,6 +19,60 @@ func (u UserRepository) QueryUserDtoInfo(userId uint64) model.User {
 		Where("user_id = ?", userId).Limit(1)
 	query.Find(&user)
 	return user
+}
+
+func (u UserRepository) UpdateFollowCount(userId uint64, Type int) bool {
+	var user model.User
+	query := global.DB.Debug().
+		Model(model.User{})
+	query.Select("id", "user_id", "name", "follow_count", "follower_count").
+		Where("user_id = ?", userId).Limit(1)
+	query.Find(&user)
+	db := global.DB.Where(user)
+	var out model.User
+	//var Cnt uint32
+	//if cnt > 0 {
+	//	Cnt = int32(cnt)
+	//} else {
+	//	Cnt = int32(-cnt)
+	//}
+	if Type == constant.FOCUS {
+		if err := db.Model(out).Debug().Where(user).Update("follow_count", user.FollowCount+1).Error; err != nil {
+			return false
+		}
+	} else if Type == constant.NoFOCUS {
+		if err := db.Model(out).Debug().Where(user).Update("follow_count", user.FollowCount-1).Error; err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (u UserRepository) UpdateFollowerCount(userId uint64, Type int) bool {
+	var user model.User
+	query := global.DB.Debug().
+		Model(model.User{})
+	query.Select("id", "user_id", "name", "follow_count", "follower_count").
+		Where("user_id = ?", userId).Limit(1)
+	query.Find(&user)
+	db := global.DB.Where(user)
+	var out model.User
+	//var Cnt uint32
+	//if cnt > 0 {
+	//	Cnt = uint32(cnt)
+	//} else {
+	//	Cnt = uint32(-cnt)
+	//}
+	if Type == constant.FOCUS {
+		if err := db.Model(out).Debug().Where(user).Update("follower_count", user.FollowerCount+1).Error; err != nil {
+			return false
+		}
+	} else if Type == constant.NoFOCUS {
+		if err := db.Model(out).Debug().Where(user).Update("follower_count", user.FollowerCount-1).Error; err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // IsFollow 判断关注关系

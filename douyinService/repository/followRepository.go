@@ -10,10 +10,27 @@ import (
 
 type FollowRepository struct {
 	Base BaseRepository
+	User UserRepository
 }
 
 func (r *FollowRepository) AddFollow(follow model.Follow) bool {
+	where := model.User{
+		UserId: follow.FollowedUserId,
+	}
+
+	if _, err := r.User.GetFirstUser(where); err != nil {
+		return false
+	}
+
 	if err := r.Base.Create(&follow); err != nil {
+		return false
+	}
+	return true
+}
+
+func (r *FollowRepository) UpdateFollowUserId(where interface{}, out interface{}) bool {
+	db := global.DB.Where(where)
+	if err := db.Model(out).Where(where).Update("is_deleted", 0).RowsAffected; err == 0 {
 		return false
 	}
 	return true

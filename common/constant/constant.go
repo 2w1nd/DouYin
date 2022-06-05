@@ -1,8 +1,8 @@
 package constant
 
 const (
-	Success = 0
-	FAIL    = 1
 	Followed = 101
 	Follow   = 102
+	FOCUS    = 1
+	NoFOCUS  = 2
 )

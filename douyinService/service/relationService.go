@@ -24,18 +24,40 @@ func (rs *RelationService) RelationAction(req request.RelationReq, userid uint64
 	if isOk := followRepository.DeleteFollowUserId(where); !isOk {
 		return false
 	}
+	if IsOk := userRepository.UpdateFollowCount(where.UserId, constant.NoFOCUS); !IsOk {
+		return false
+	}
+	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, constant.NoFOCUS); !IsOk {
+		return false
+	}
 	return true
 }
 
 func (rs *RelationService) AddAction(req request.RelationReq, userid uint64) bool {
-	follow := model.Follow{
-		UserId:         userid,
+	where := model.Follow{
 		FollowedUserId: req.ToUserId,
-		IsDeleted:      false,
+		UserId:         userid,
 	}
-	if isOk := followRepository.AddFollow(follow); !isOk {
+
+	var out model.Follow
+	if isOk := followRepository.UpdateFollowUserId(where, &out); !isOk {
+		follow := model.Follow{
+			UserId:         userid,
+			FollowedUserId: req.ToUserId,
+			IsDeleted:      false,
+		}
+		if IsOk := followRepository.AddFollow(follow); !IsOk {
+			return false
+		}
+	}
+
+	if IsOk := userRepository.UpdateFollowCount(where.UserId, constant.FOCUS); !IsOk {
 		return false
 	}
+	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, constant.FOCUS); !IsOk {
+		return false
+	}
+
 	return true
 }
 

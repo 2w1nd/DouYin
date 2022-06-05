@@ -39,7 +39,7 @@ func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Ti
 			return nil, time.Time{}
 		}
 		if len(videoData.VideoList) != 0 {
-			return videoData.VideoList, time.Unix(videoData.NextTime, 0)
+			return videoData.VideoList, time.Unix(videoData.NextTime/1000, 0)
 		}
 	}
 	// 从数据库中查询
@@ -77,7 +77,7 @@ func (fs *FeedService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 			isFollow = false
 		}
 		if len(video.Favorite) != 0 {
-			isFavorite = video.Favorite[0].IsDeleted
+			isFavorite = false
 		} else {
 			isFavorite = false
 		}
