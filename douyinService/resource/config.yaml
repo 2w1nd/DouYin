@@ -1,21 +1,21 @@
 redis:
   db: 0
-  addr: 127.0.0.1:6379
-  password: ''
+  addr: 47.96.157.235:6379
+  password: '000415'
 
 mysql:
-  path: localhost
-  config: charset=utf8&parseTime=True&loc=Local
+  path: 121.40.134.218
+  config: charset=utf8mb4&parseTime=True&loc=Local
   db-name: douyin
-  username: root
-  password: 123456
+  username: douyin
+  password: zijiefan
   max-idle-conns: 10
   max-open-conns: 100
 
 qiniu:
-  bucket: x
-  accessKey: a
-  secretKey: s
+  bucket: xlong99
+  accessKey: JafZdnNs3QlssMUSi0LQqA5befbowM7HyibjCexQ
+  secretKey: zY-0Qbyie8s1I_kWlCzy07-NIAtR0v66COV1gKq6
 
 
 # system configuration
