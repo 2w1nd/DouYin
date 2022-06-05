@@ -3,17 +3,13 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
-	"github.com/DouYin/service/service"
 	"gorm.io/gorm/clause"
 	"log"
-	"strconv"
 )
 
 type FavoriteRepository struct {
 	Base BaseRepository
 }
-
-var favoriteService service.FavoriteService
 
 func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId uint64, videoId uint64) (bool, model.Favorite) {
 	var count int64
@@ -28,8 +24,8 @@ func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId uint64, video
 	}
 }
 func (fr *FavoriteRepository) AddFavorite(favorite model.Favorite) bool {
-	log.Println("添加到数据库")
-	if err := global.DB.Clauses(clause.OnConflict{
+	log.Println("添加到数据库: is_del: ", favorite.IsDeleted)
+	if err := global.DB.Debug().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "user_id"}, {Name: "video_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"is_deleted"}),
 	}).Create(&favorite); err != nil {
@@ -46,9 +42,9 @@ func (fr *FavoriteRepository) DeleteFavoriteById(where interface{}) bool {
 }
 
 //根据VideoId查询对应Video点赞数量，并存入数据库
-func (fr *FavoriteRepository) SaveFavoriteCount(videoId string) error {
-	id, err := strconv.ParseInt(videoId, 10, 64)
-	ans, err := favoriteService.RedisGetVideoFavoriteCount(id)
-	global.DB.Model(model.Video{}).Update("favorite_count", ans)
-	return err
+func (fr *FavoriteRepository) SaveFavoriteCount(videoId uint64, ans int64) error {
+	//id, err := strconv.ParseInt(videoId, 10, 64)
+	//ans, err := favoriteService.RedisGetVideoFavoriteCount(id)
+	global.DB.Model(model.Video{}).Where("video_id = ?", videoId).Update("favorite_count", ans)
+	return nil
 }

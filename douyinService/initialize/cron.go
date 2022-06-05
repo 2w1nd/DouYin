@@ -7,7 +7,8 @@ import (
 
 func Cron() {
 	c := cron.New()
-	_, _ = c.AddFunc("@every 5s", func() {
+	// 每5分钟执行一次
+	_, _ = c.AddFunc("*/1 * * * *", func() {
 		service.SynchronizeDBAndRedis()
 	})
 	c.Start()

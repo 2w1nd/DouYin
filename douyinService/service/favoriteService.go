@@ -261,7 +261,7 @@ func (fs *FavoriteService) RedisGetFavoriteList(userId int64) ([]int64, error) {
 }
 
 //根据VideoId查询对应Video点赞数量
-func (fs *FavoriteService) RedisGetVideoFavoriteCount(videoId int64) (int64, error) {
+func RedisGetVideoFavoriteCount(videoId int64) (int64, error) {
 
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(videoId))
 	var favoriteCount *redis.BitCount
@@ -320,7 +320,7 @@ func (fs *FavoriteService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 			Title:         video.Title,
 			IsFavorite:    isFavorite,
 		}
-		count, _ := fs.RedisGetVideoFavoriteCount(int64(videoVo.VideoID))
+		count, _ := RedisGetVideoFavoriteCount(int64(videoVo.VideoID))
 		videoVo.FavoriteCount = uint32(count)
 
 		videoVos = append(videoVos, videoVo)
@@ -342,42 +342,44 @@ func SynchronizeDBAndRedis() {
 		log.Println("like", uid)
 		for _, videoId := range FavoriteVideoIds {
 			var ok bool
+			log.Println("like video:", videoId)
 			vid := utils.String2Uint64(videoId)
 			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(uid, vid)
 			if ok {
-				return
+				break
 			}
 			favoriteRepository.AddFavorite(model.Favorite{
 				UserId:    uid,
 				VideoId:   vid,
-				IsDeleted: true,
+				IsDeleted: false,
 			})
 
 		}
-
 	}
+
 	var setkey []string
 	setkey, err = global.REDIS.Keys(ctx, "favorite:"+"user_unlike_videos:*").Result()
 	if err != nil {
 		return
 	}
+	log.Println("unlike setkey: ", setkey)
 	var UnFavoritevideoIds []string
 	for _, userId := range setkey {
 		UnFavoritevideoIds, err = global.REDIS.SMembers(ctx, userId).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
 		log.Println("unlike:", uid)
 		for _, videoId := range UnFavoritevideoIds {
-			log.Println("unlike", videoId)
+			log.Println("unlike videoId:", videoId)
 			var ok bool
 			vid := utils.String2Uint64(videoId)
 			ok, _ = favoriteRepository.GetFavoriteByUserIdAndVideoId(uid, vid)
 			if ok {
-				return
+				break
 			}
 			favoriteRepository.AddFavorite(model.Favorite{
 				UserId:    uid,
 				VideoId:   vid,
-				IsDeleted: false,
+				IsDeleted: true,
 			})
 		}
 
@@ -386,10 +388,10 @@ func SynchronizeDBAndRedis() {
 	bitmapkey, err = global.REDIS.Keys(ctx, "favorite:"+"video_likedby_users:*").Result()
 	for _, videoId := range bitmapkey {
 		vid := utils.String2Uint64(utils.SplitString(videoId, ":"))
-		err := favoriteRepository.SaveFavoriteCount(strconv.Itoa(int(vid)))
+		ans, _ := RedisGetVideoFavoriteCount(int64(vid))
+		err := favoriteRepository.SaveFavoriteCount(vid, ans)
 		if err != nil {
 			return
 		}
 	}
-
 }
