@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/DouYin/common/constant"
+	"github.com/DouYin/common/codes"
 	"github.com/DouYin/common/entity/dto"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
@@ -64,11 +64,11 @@ func (r *FollowRepository) GetFollowedOrFollowUserWithUserId(id uint64, Type int
 	var sqlQ string
 	subQuery = global.DB.Model(model.Follow{}).Select("user_id", "followed_user_id", "is_deleted")
 	subQuery1 = global.DB.Model(model.Follow{}).Select("user_id", "followed_user_id", "is_deleted")
-	if Type == constant.Followed {
+	if Type == codes.Followed {
 		subQuery = subQuery.Where("followed_user_id = ?", id)
 		subQuery1 = subQuery1.Where("user_id = ?", id)
 		sqlQ = "LEFT JOIN douyin_user on a.user_id = douyin_user.user_id"
-	} else if Type == constant.Follow {
+	} else if Type == codes.Follow {
 		subQuery = subQuery.Where("user_id = ?", id)
 		subQuery1 = subQuery1.Where("followed_user_id = ?", id)
 		sqlQ = "LEFT JOIN douyin_user on a.followed_user_id = douyin_user.user_id"

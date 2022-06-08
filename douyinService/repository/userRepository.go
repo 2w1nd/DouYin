@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/DouYin/common/constant"
+	"github.com/DouYin/common/codes"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 )
@@ -36,11 +36,11 @@ func (u UserRepository) UpdateFollowCount(userId uint64, Type int) bool {
 	//} else {
 	//	Cnt = int32(-cnt)
 	//}
-	if Type == constant.FOCUS {
+	if Type == codes.FOCUS {
 		if err := db.Model(out).Debug().Where(user).Update("follow_count", user.FollowCount+1).Error; err != nil {
 			return false
 		}
-	} else if Type == constant.NoFOCUS {
+	} else if Type == codes.NoFOCUS {
 		if err := db.Model(out).Debug().Where(user).Update("follow_count", user.FollowCount-1).Error; err != nil {
 			return false
 		}
@@ -63,11 +63,11 @@ func (u UserRepository) UpdateFollowerCount(userId uint64, Type int) bool {
 	//} else {
 	//	Cnt = uint32(-cnt)
 	//}
-	if Type == constant.FOCUS {
+	if Type == codes.FOCUS {
 		if err := db.Model(out).Debug().Where(user).Update("follower_count", user.FollowerCount+1).Error; err != nil {
 			return false
 		}
-	} else if Type == constant.NoFOCUS {
+	} else if Type == codes.NoFOCUS {
 		if err := db.Model(out).Debug().Where(user).Update("follower_count", user.FollowerCount-1).Error; err != nil {
 			return false
 		}

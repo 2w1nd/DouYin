@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/DouYin/common/codes"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
@@ -11,18 +12,6 @@ import (
 	"log"
 	"strconv"
 	"time"
-)
-
-const (
-	//bitmap查询结果
-	BITMAPLIKE   int = 1
-	BITMAPUNLIKE int = 0
-
-	ERROR int = -1
-
-	ALREADYEXIST  int = 0
-	ALREADYDELETE int = 0
-	SUCCESS       int = 1
 )
 
 var (
@@ -56,16 +45,16 @@ func redisAddUserLikeVideos(favoriteInfo model.Favorite) int {
 		//fmt.Println("redisAddUserLikeVideos", 0)
 		if err != nil {
 			//fmt.Println("redisAddUserLikeVideos", 1)
-			return ERROR
+			return codes.ERROR
 		}
-		return SUCCESS
+		return codes.SUCCESS
 	} else if err != nil {
-		return ERROR
+		return codes.ERROR
 	} else {
 		//key和value已存在
 
 		//fmt.Println("redisAddUserLikeVideos", 2)
-		return ALREADYEXIST
+		return codes.ALREADYEXIST
 
 	}
 
@@ -80,25 +69,25 @@ func redisAddUserUnLikeVideos(favoriteInfo model.Favorite) int {
 	ok, err := global.REDIS.SIsMember(ctx, setKey, setValue).Result()
 	//fmt.Println("redisAddUserUnLikeVideos", 1)
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 		//fmt.Println("redisAddUserUnLikeVideos", 2)
 	}
 	if ok == true {
 		//fmt.Println("redisAddUserUnLikeVideos", 3)
-		return ALREADYEXIST
+		return codes.ALREADYEXIST
 	}
 	//fmt.Println("redisAddUserUnLikeVideos", 4)
 	//添加取消赞的VideoId
 	_, err = global.REDIS.SAdd(ctx, setKey, setValue).Result()
 	if err != nil {
 		//fmt.Println("redisAddUserUnLikeVideos", 5)
-		return ERROR
+		return codes.ERROR
 	}
 	//fmt.Println("redisAddUserUnLikeVideos", 6)
-	return SUCCESS
+	return codes.SUCCESS
 }
 
-//查询bitmap中是否已记录该点赞 方向:User->Videos
+// RedisIsUserLikeVideosCreated 查询bitmap中是否已记录该点赞 方向:User->Videos
 func (fs *FavoriteService) RedisIsUserLikeVideosCreated(userId int64, videoId int64) int {
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(videoId))
 
@@ -106,20 +95,27 @@ func (fs *FavoriteService) RedisIsUserLikeVideosCreated(userId int64, videoId in
 	//查询失败
 	if err != nil {
 		//fmt.Println("RedisIsUserLikeVideosCreated", 1)
-		return ERROR
+		return codes.ERROR
 	}
 
 	//返回查询到的结果
 	if ok == 1 {
 		//fmt.Println("RedisIsUserLikeVideosCreated", 2)
-
-		return BITMAPLIKE
+		return codes.BITMAPLIKE
 	} else {
 		//未记录过或值为0
 		//fmt.Println("RedisIsUserLikeVideosCreated", 2)
-		return BITMAPUNLIKE
+		return codes.BITMAPUNLIKE
 	}
+}
 
+// DBIsUserLikeVideosCreated 查询db中是否已记录该点赞 方向:User->Videos
+func (fs *FavoriteService) DBIsUserLikeVideosCreated(userId int64, videoId int64) bool {
+	flag, fav := favoriteRepository.GetFavoriteByUserIdAndVideoId(uint64(userId), uint64(videoId))
+	if flag {
+		return fav.IsDeleted
+	}
+	return false
 }
 
 //取消赞后，记录取消赞 方向:User->Videos
@@ -132,9 +128,9 @@ func redisDeleteUserLikeVideos(favoriteInfo model.Favorite) int {
 	//点赞结果已删除
 	if err == redis.Nil {
 		//fmt.Println("redisDeleteUserLikeVideos", 0)
-		return ALREADYDELETE
+		return codes.ALREADYDELETE
 	} else if err != nil {
-		return ERROR
+		return codes.ERROR
 	} else {
 
 		//_位置返回1删除成功，0是不存在
@@ -143,10 +139,10 @@ func redisDeleteUserLikeVideos(favoriteInfo model.Favorite) int {
 		if err != nil {
 			//fmt.Println("redisDeleteUserLikeVideos", err)
 			//fmt.Println("redisDeleteUserLikeVideos", 2)
-			return ERROR
+			return codes.ERROR
 		}
 
-		return SUCCESS
+		return codes.SUCCESS
 
 	}
 
@@ -160,18 +156,18 @@ func redisDeleteUserUnLikeVideos(favoriteInfo model.Favorite) int {
 	//未查找到该取消赞的VideoId
 	ok, err := global.REDIS.SIsMember(ctx, setKey, setValue).Result()
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 	}
 	if ok == false {
-		return ALREADYDELETE
+		return codes.ALREADYDELETE
 	}
 
 	_, err = global.REDIS.SRem(ctx, setKey, setValue).Result()
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 	}
 
-	return SUCCESS
+	return codes.SUCCESS
 }
 
 //点赞后，bitmap将该UserId位置1 方向:Video->Users
@@ -179,9 +175,9 @@ func redisAddVideoLikedByUsers(favoriteInfo model.Favorite) int {
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(favoriteInfo.VideoId))
 	_, err := global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId)%4294967296, 1).Result()
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 	}
-	return SUCCESS
+	return codes.SUCCESS
 }
 
 //取消赞后，bitmap将该UserId位置0 方向:Video->Users
@@ -190,23 +186,23 @@ func redisDeleteVideoLikedByUsers(favoriteInfo model.Favorite) int {
 	_, err := global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId)%4294967296, 0).Result()
 	if err != nil {
 		//fmt.Println("redisDeleteVideoLikedByUsers", 1)
-		return ERROR
+		return codes.ERROR
 	}
 	//fmt.Println("redisDeleteVideoLikedByUsers", 0)
-	return SUCCESS
+	return codes.SUCCESS
 }
 
 //进行点赞后Redis操作
 func (fs *FavoriteService) RedisAddFavorite(favoriteInfo model.Favorite) bool {
 	var ok int
 	//后面加锁，保证原子性
-	if ok = redisDeleteUserUnLikeVideos(favoriteInfo); ok == ERROR {
+	if ok = redisDeleteUserUnLikeVideos(favoriteInfo); ok == codes.ERROR {
 		return false
 	}
-	if ok = redisAddUserLikeVideos(favoriteInfo); ok == ERROR {
+	if ok = redisAddUserLikeVideos(favoriteInfo); ok == codes.ERROR {
 		return false
 	}
-	if ok = redisAddVideoLikedByUsers(favoriteInfo); ok == ERROR {
+	if ok = redisAddVideoLikedByUsers(favoriteInfo); ok == codes.ERROR {
 		return false
 	}
 	return true
@@ -216,13 +212,13 @@ func (fs *FavoriteService) RedisAddFavorite(favoriteInfo model.Favorite) bool {
 func (fs *FavoriteService) RedisDeleteFavorite(favoriteInfo model.Favorite) bool {
 	var ok int
 	//后面加锁，保证原子性
-	if ok = redisAddUserUnLikeVideos(favoriteInfo); ok == ERROR {
+	if ok = redisAddUserUnLikeVideos(favoriteInfo); ok == codes.ERROR {
 		return false
 	}
-	if ok = redisDeleteUserLikeVideos(favoriteInfo); ok == ERROR {
+	if ok = redisDeleteUserLikeVideos(favoriteInfo); ok == codes.ERROR {
 		return false
 	}
-	if ok = redisDeleteVideoLikedByUsers(favoriteInfo); ok == ERROR {
+	if ok = redisDeleteVideoLikedByUsers(favoriteInfo); ok == codes.ERROR {
 		return false
 	}
 	return true
@@ -250,10 +246,10 @@ func (fs *FavoriteService) RedisGetFavoriteList(userId int64) ([]int64, error) {
 
 //根据VideoId查询对应Video点赞数量
 func RedisGetVideoFavoriteCount(videoId int64) (int64, error) {
-
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(videoId))
 	var favoriteCount *redis.BitCount
 	ans, err := global.REDIS.BitCount(ctx, bitmapKey, favoriteCount).Result()
+	log.Println("bigmap查询失败：", ans, err)
 	return ans, err
 }
 
@@ -286,7 +282,7 @@ func (fs *FavoriteService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 			isFollow = false
 		}
 		ok := fs.RedisIsUserLikeVideosCreated(int64(video.User.UserId), int64(video.VideoId))
-		if ok == BITMAPLIKE {
+		if ok == codes.BITMAPLIKE {
 			isFavorite = true
 		} else {
 			isFavorite = false

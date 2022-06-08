@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/DouYin/common/constant"
+	"github.com/DouYin/common/codes"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/response"
 	"github.com/DouYin/common/entity/vo"
@@ -23,14 +23,14 @@ func RelationAction(c *gin.Context) {
 	var relationReq request.RelationReq
 	_ = c.ShouldBindQuery(&relationReq)
 	user := utils.GetUserContext(c)
-	if relationReq.ActionType == constant.NoFOCUS {
+	if relationReq.ActionType == codes.NoFOCUS {
 		log.Println("取消关注")
 		if /*CommentVos,*/ err := relationService.RelationAction(relationReq, user.Id); !err {
 			response.FailWithMessage("取消关注失败", c)
 		} else {
 			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "取消关注成功"})
 		}
-	} else if relationReq.ActionType == constant.FOCUS {
+	} else if relationReq.ActionType == codes.FOCUS {
 		log.Println("关注")
 		if /*CommentVos,*/ err := relationService.AddAction(relationReq, user.Id); !err {
 			response.FailWithMessage("关注失败", c)

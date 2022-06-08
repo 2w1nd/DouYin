@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"github.com/DouYin/common/codes"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/DouYin/common/model"
@@ -18,7 +21,7 @@ func Register(c *gin.Context) {
 	password := c.Query("password")
 	//name := c.Query("name")
 	if username == "" || len(username) > 32 || password == "" || len(password) > 32 {
-		rlHandler(c, 500, "参数错误", "", 0)
+		rlHandler(c, codes.ERROR, "参数错误", "", 0)
 		return
 	}
 	user := &model.User{
@@ -39,7 +42,7 @@ func Login(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
 	if username == "" || len(username) > 256 || password == "" {
-		rlHandler(c, 500, "参数错误", "", 0)
+		rlHandler(c, codes.ERROR, "参数错误", "", 0)
 		return
 	}
 
@@ -51,10 +54,11 @@ func Login(c *gin.Context) {
 // @Description: 获取登录用户的id，昵称，如果实现社交部分的功能，还会返回关注数的粉丝数
 // @param: c
 func UserInfo(c *gin.Context) {
+	log.Println("用户信息接口")
 	userId := c.Query("user_id")
 	userMsg := service.UserMsg{}
 	if userId == "" {
-		msgHandler(c, 500, "参数错误", &userMsg)
+		msgHandler(c, codes.ERROR, "参数错误", &userMsg)
 		return
 	}
 	code, msg, userMsg := userService.UserInfo(userId, c.GetHeader("userId"))
@@ -62,26 +66,26 @@ func UserInfo(c *gin.Context) {
 }
 
 func rlHandler(c *gin.Context, statusCode int, msg, token string, userId uint64) {
-	code := 200
-	if statusCode != 0 {
-		code = statusCode
+	code := http.StatusInternalServerError
+	if statusCode != codes.ERROR {
+		code = http.StatusOK
 	}
 	c.JSON(code, gin.H{
-		"status_code":    statusCode,
-		"status_message": msg,
-		"user_id":        userId,
-		"token":          token,
+		"status_code": statusCode,
+		"status_msg":  msg,
+		"user_id":     userId,
+		"token":       token,
 	})
 }
 
 func msgHandler(c *gin.Context, statusCode int, msg string, userMsg *service.UserMsg) {
-	code := 200
-	if statusCode != 0 {
-		code = statusCode
+	code := http.StatusInternalServerError
+	if statusCode != codes.ERROR {
+		code = http.StatusOK
 	}
 	c.JSON(code, gin.H{
-		"status_code":    statusCode,
-		"status_message": msg,
-		"user":           *userMsg,
+		"status_code": statusCode,
+		"status_msg":  msg,
+		"user":        *userMsg,
 	})
 }
