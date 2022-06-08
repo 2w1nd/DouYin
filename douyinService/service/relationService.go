@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/DouYin/common/constant"
+	"fmt"
+	"github.com/DouYin/common/codes"
 	"github.com/DouYin/common/entity/dto"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
@@ -17,50 +18,35 @@ import (
 
 var (
 	followRepository repository.FollowRepository
-
-	ctxx = context.Background()
+	ctxx             = context.Background()
 )
 
 type RelationService struct {
 }
 
-const (
-	//bitmap查询结果
-	BITMAPFOLLOW   int = 1
-	BITMAPUNFOLLOW int = 0
-)
-
 func (rs *RelationService) RelationAction(where model.Follow) bool {
 	if isOk := followRepository.DeleteFollowUserId(where); !isOk {
 		return false
 	}
-	if IsOk := userRepository.UpdateFollowCount(where.UserId, constant.NoFOCUS); !IsOk {
+	if IsOk := userRepository.UpdateFollowCount(where.UserId, codes.NoFOCUS); !IsOk {
 		return false
 	}
-	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, constant.NoFOCUS); !IsOk {
+	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, codes.NoFOCUS); !IsOk {
 		return false
 	}
 	return true
 }
 
+// AddAction 添加关注到DB
 func (rs *RelationService) AddAction(where model.Follow) bool {
-
 	var out model.Follow
 	if isOk := followRepository.UpdateFollowUserId(where, &out); !isOk {
-		follow := model.Follow{
-			UserId:         where.UserId,
-			FollowedUserId: where.FollowedUserId,
-			IsDeleted:      false,
-		}
-		if IsOk := followRepository.AddFollow(follow); !IsOk {
-			return false
-		}
-	}
-
-	if IsOk := userRepository.UpdateFollowCount(where.UserId, constant.FOCUS); !IsOk {
 		return false
 	}
-	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, constant.FOCUS); !IsOk {
+	if IsOk := userRepository.UpdateFollowCount(where.UserId, codes.FOCUS); !IsOk {
+		return false
+	}
+	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, codes.FOCUS); !IsOk {
 		return false
 	}
 
@@ -69,29 +55,29 @@ func (rs *RelationService) AddAction(where model.Follow) bool {
 
 func (rs *RelationService) FollowList(userId uint64) []vo.UserVo {
 	var userList []vo.UserVo
-	followUsers, _ := followRepository.GetFollowedOrFollowUserWithUserId(userId, constant.Follow)
+	followUsers, _ := followRepository.GetFollowedOrFollowUserWithUserId(userId, codes.Follow)
 	log.Println(followUsers)
 	for _, user := range followUsers {
 		log.Println(user.FollowedUserId)
 	}
-	userList = rs.userDto2UserVos(followUsers, constant.Follow)
+	userList = rs.userDto2UserVos(followUsers, codes.Follow)
 	return userList
 }
 
 func (rs *RelationService) FollowerList(userId uint64) []vo.UserVo {
 	var userList []vo.UserVo
-	followedUsers, _ := followRepository.GetFollowedOrFollowUserWithUserId(userId, constant.Followed)
+	followedUsers, _ := followRepository.GetFollowedOrFollowUserWithUserId(userId, codes.Followed)
 	log.Println(followedUsers)
 	for _, user := range followedUsers {
 		log.Println(user.UserId)
 	}
-	userList = rs.userDto2UserVos(followedUsers, constant.Followed)
+	userList = rs.userDto2UserVos(followedUsers, codes.Followed)
 	return userList
 }
 
 func (rs *RelationService) userDto2UserVos(followerUsers []dto.FollowDto, Type int) []vo.UserVo {
 	var userVos []vo.UserVo
-	if Type == constant.Followed {
+	if Type == codes.Followed {
 		for _, user := range followerUsers {
 			var userVo vo.UserVo
 			userVo = vo.UserVo{
@@ -103,7 +89,7 @@ func (rs *RelationService) userDto2UserVos(followerUsers []dto.FollowDto, Type i
 			}
 			userVos = append(userVos, userVo)
 		}
-	} else if Type == constant.Follow {
+	} else if Type == codes.Follow {
 		for _, user := range followerUsers {
 			var userVo vo.UserVo
 			userVo = vo.UserVo{
@@ -119,80 +105,40 @@ func (rs *RelationService) userDto2UserVos(followerUsers []dto.FollowDto, Type i
 	return userVos
 }
 
-//根据UserId查询对应用户粉丝数量
-func RedisGetFollowCount(userid int64) (int64, error) {
-
-	bitmapKey := "relation:" + "followedby_users:" + strconv.Itoa(int(userid))
-	var relationCount *redis.BitCount
-	ans, err := global.REDIS.BitCount(ctxx, bitmapKey, relationCount).Result()
-	return ans, err
+// RedisGetFollowerCount 根据UserId查询对应用户粉丝数量
+func (rs *RelationService) RedisGetFollowerCount(userid int64) (int64, error) {
+	zsetKey0 := "relation:" + "follower:" + strconv.Itoa(int(userid))
+	count, err := global.REDIS.ZCard(ctxx, zsetKey0).Result()
+	return count, err
 }
 
-//根据UserId查询对应用户关注数量
-func RedisGetFollowedCount(userid int64) (int64, error) {
-
-	bitmapKey := "relation:" + "followby_users:" + strconv.Itoa(int(userid))
-	var relationCount *redis.BitCount
-	ans, err := global.REDIS.BitCount(ctxx, bitmapKey, relationCount).Result()
-	return ans, err
+// RedisGetFollowCount 根据UserId查询对应用户关注数量
+func (rs *RelationService) RedisGetFollowCount(userid int64) (int64, error) {
+	zsetKey0 := "relation:" + "follow:" + strconv.Itoa(int(userid))
+	count, err := global.REDIS.ZCard(ctxx, zsetKey0).Result()
+	return count, err
 }
 
-//查询bitmap中是否已记录该关注 方向:User->ToFollowed
-func (rs *RelationService) RedisIsRelationCreated(userId int64, FollowedUserId int64) int {
-	bitmapKey := "relation:" + "followedby_users:" + strconv.Itoa(int(FollowedUserId))
-	bitmapKey0 := "relation:" + "followby_users:" + strconv.Itoa(int(userId))
+// RedisIsRelationCreated 查询中是否已记录该关注 方向:User->ToFollowed
+func (rs *RelationService) RedisIsRelationCreated(userId int64, followedUserId int64) bool {
+	zsetKey := "relation:" + "follow:" + strconv.Itoa(int(userId))
 
-	ok, err := global.REDIS.GetBit(ctxx, bitmapKey, userId).Result()
-	global.REDIS.GetBit(ctxx, bitmapKey0, FollowedUserId).Result()
-	//查询失败
+	values, err := global.REDIS.ZRevRangeWithScores(ctxx, zsetKey, 0, -1).Result()
 	if err != nil {
-		return ERROR
+		return false
 	}
-
-	//返回查询到的结果
-	if ok == 1 {
-
-		return BITMAPFOLLOW
-	} else {
-		//未记录过或值为0
-
-		return BITMAPUNFOLLOW
-	}
-
-}
-
-//取消关注后，记录取消的关注 方向:User->ToFollowed
-func redisUnAddRelation(followInfo model.Follow) int {
-	zsetKey := "relation:" + "followed:" + strconv.Itoa(int(followInfo.UserId))
-	zsetKey0 := "relation:" + "follow:" + strconv.Itoa(int(followInfo.FollowedUserId))
-
-	zsetMember := strconv.Itoa(int(followInfo.FollowedUserId))
-	zsetMember0 := strconv.Itoa(int(followInfo.UserId))
-
-	_, err := global.REDIS.ZRank(ctxx, zsetKey, zsetMember).Result()
-	global.REDIS.ZRank(ctxx, zsetKey0, zsetMember0).Result()
-	//点赞结果已删除
-	if err == redis.Nil {
-		return ALREADYDELETE
-	} else if err != nil {
-		return ERROR
-	} else {
-
-		//_位置返回1删除成功，0是不存在
-		_, err = global.REDIS.ZRem(ctxx, zsetKey, zsetMember).Result()
-		global.REDIS.ZRem(ctxx, zsetKey0, zsetMember0).Result()
-		if err != nil {
-			return ERROR
+	for _, value := range values {
+		followid, _ := strconv.ParseInt(value.Member.(string), 10, 64)
+		if followid == followedUserId {
+			return true
 		}
-
-		return SUCCESS
 	}
-
+	return false
 }
 
 //取消关注后又关注时，在记录删除取消关注的set中删除 方向User->ToFollowed
 func redisDeleteUserUnRelation(followInfo model.Follow) int {
-	setKey := "relation:" + "unfollowed:" + strconv.Itoa(int(followInfo.UserId))
+	setKey := "relation:" + "unfollower:" + strconv.Itoa(int(followInfo.UserId))
 	setKey0 := "relation:" + "unfollow:" + strconv.Itoa(int(followInfo.FollowedUserId))
 
 	setValue := strconv.Itoa(int(followInfo.FollowedUserId))
@@ -200,27 +146,27 @@ func redisDeleteUserUnRelation(followInfo model.Follow) int {
 
 	//未查找到该取消关注的FollowedUserId
 	ok, err := global.REDIS.SIsMember(ctxx, setKey, setValue).Result()
-	global.REDIS.SIsMember(ctxx, setKey0, setValue0).Result()
+	_, _ = global.REDIS.SIsMember(ctxx, setKey0, setValue0).Result()
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 	}
 	if ok == false {
-		return ALREADYDELETE
+		return codes.ALREADYDELETE
 	}
 
 	_, err = global.REDIS.SRem(ctxx, setKey, setValue).Result()
-	global.REDIS.SRem(ctxx, setKey0, setValue0).Result()
+	_, _ = global.REDIS.SRem(ctxx, setKey0, setValue0).Result()
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 	}
 
-	return SUCCESS
+	return codes.SUCCESS
 }
 
 //关注后，zset添加用户关注的FollowedUserId(score为时间) 方向:User->ToFollowed
 func redisAddRelation(relationInfo model.Follow) int {
-	zsetKey := "relation:" + "followed:" + strconv.Itoa(int(relationInfo.UserId))
-	zsetKey0 := "relation:" + "follow:" + strconv.Itoa(int(relationInfo.FollowedUserId))
+	zsetKey := "relation:" + "follow:" + strconv.Itoa(int(relationInfo.UserId))
+	zsetKey0 := "relation:" + "follower:" + strconv.Itoa(int(relationInfo.FollowedUserId))
 
 	zsetScore := Time2Float(time.Now())
 	zsetScore0 := zsetScore
@@ -228,117 +174,108 @@ func redisAddRelation(relationInfo model.Follow) int {
 	zsetMember := strconv.Itoa(int(relationInfo.FollowedUserId))
 	zsetMember0 := strconv.Itoa(int(relationInfo.UserId))
 
-	zsetValue := &redis.Z{zsetScore, zsetMember}
-	zsetValue0 := &redis.Z{zsetScore0, zsetMember0}
+	zsetValue := &redis.Z{Score: zsetScore, Member: zsetMember}
+	zsetValue0 := &redis.Z{Score: zsetScore0, Member: zsetMember0}
 
 	_, err := global.REDIS.ZRank(ctxx, zsetKey, zsetMember).Result()
-	global.REDIS.ZRank(ctxx, zsetKey0, zsetMember0).Result()
+	_, _ = global.REDIS.ZRank(ctxx, zsetKey0, zsetMember0).Result()
 
 	if err == redis.Nil {
-		//fmt.Println("error", err)
+		fmt.Println("error", err)
 		_, err = global.REDIS.ZAdd(ctxx, zsetKey, zsetValue).Result()
-		global.REDIS.ZAdd(ctxx, zsetKey0, zsetValue0).Result()
+		_, _ = global.REDIS.ZAdd(ctxx, zsetKey0, zsetValue0).Result()
 
 		if err != nil {
-			return ERROR
+			return codes.ERROR
 		}
-		return SUCCESS
+		return codes.SUCCESS
 	} else if err != nil {
-		return ERROR
+		return codes.ERROR
 	} else {
 		//key和value已存在
-
-		return ALREADYEXIST
-
+		return codes.ALREADYEXIST
 	}
-
 }
 
-//关注后取消，set添加用户取消关注的FollowedUserId 方向:User->ToFollowed
+// RedisAddRelation 关注后Redis操作
+func (rs *RelationService) RedisAddRelation(followInfo model.Follow) bool {
+	var ok int
+	//后面加锁，保证原子性
+	if ok = redisDeleteUserUnRelation(followInfo); ok == codes.ERROR {
+		return false
+	}
+	if ok = redisAddRelation(followInfo); ok == codes.ERROR {
+		return false
+	}
+	return true
+}
+
+// 关注后取消，set添加用户取消关注的FollowedUserId 方向:User->ToFollowed
 func redisAddUserUnRelations(relationInfo model.Follow) int {
-	setKey := "relation:" + "unfollowed:" + strconv.Itoa(int(relationInfo.UserId))
-	setKey0 := "relation:" + "unfollow:" + strconv.Itoa(int(relationInfo.FollowedUserId))
+	setKey := "relation:" + "unfollow:" + strconv.Itoa(int(relationInfo.UserId))
+	setKey0 := "relation:" + "unfollower:" + strconv.Itoa(int(relationInfo.FollowedUserId))
 
 	setValue := strconv.Itoa(int(relationInfo.FollowedUserId))
 	setValue0 := strconv.Itoa(int(relationInfo.UserId))
 
 	ok, err := global.REDIS.SIsMember(ctxx, setKey, setValue).Result()
-	global.REDIS.SIsMember(ctxx, setKey0, setValue0).Result()
+	_, _ = global.REDIS.SIsMember(ctxx, setKey0, setValue0).Result()
 
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 	}
 	if ok == true {
-		return ALREADYEXIST
+		return codes.ALREADYEXIST
 	}
 
 	_, err = global.REDIS.SAdd(ctxx, setKey, setValue).Result()
-	global.REDIS.SAdd(ctxx, setKey0, setValue0).Result()
+	_, _ = global.REDIS.SAdd(ctxx, setKey0, setValue0).Result()
 	if err != nil {
-		return ERROR
+		return codes.ERROR
 	}
-	return SUCCESS
+	return codes.SUCCESS
 }
 
-//关注后，bitmap将该UserId位置1 方向:ToFollowed->Users
-func redisAddRelationByUsers(followInfo model.Follow) int {
-	bitmapKey := "relation:" + "followedby_users:" + strconv.Itoa(int(followInfo.FollowedUserId))
-	bitmapKey0 := "relation:" + "followby_users:" + strconv.Itoa(int(followInfo.UserId))
+// 取消关注后，记录取消的关注 方向:User->ToFollowed
+func redisUnAddRelation(followInfo model.Follow) int {
+	zsetKey := "relation:" + "follow:" + strconv.Itoa(int(followInfo.UserId))
+	zsetKey0 := "relation:" + "follower:" + strconv.Itoa(int(followInfo.FollowedUserId))
 
-	_, err := global.REDIS.SetBit(ctxx, bitmapKey, int64(followInfo.UserId)%4294967296, 1).Result()
-	global.REDIS.SetBit(ctxx, bitmapKey0, int64(followInfo.FollowedUserId)%4294967296, 1).Result()
-	if err != nil {
-		return ERROR
+	zsetMember := strconv.Itoa(int(followInfo.FollowedUserId))
+	zsetMember0 := strconv.Itoa(int(followInfo.UserId))
+
+	_, err := global.REDIS.ZRank(ctxx, zsetKey, zsetMember).Result()
+	_, _ = global.REDIS.ZRank(ctxx, zsetKey0, zsetMember0).Result()
+	//点赞结果已删除
+	if err == redis.Nil {
+		return codes.ALREADYDELETE
+	} else if err != nil {
+		return codes.ERROR
+	} else {
+		//_位置返回1删除成功，0是不存在
+		_, err = global.REDIS.ZRem(ctxx, zsetKey, zsetMember).Result()
+		_, _ = global.REDIS.ZRem(ctxx, zsetKey0, zsetMember0).Result()
+		if err != nil {
+			return codes.ERROR
+		}
+		return codes.SUCCESS
 	}
-	return SUCCESS
 }
 
-//取消赞后，bitmap将该UserId位置0 方向:ToFollowed->Users
-func redisDeleteRelationByUsers(followInfo model.Follow) int {
-	bitmapKey := "relation:" + "followedby_users:" + strconv.Itoa(int(followInfo.FollowedUserId))
-	bitmapKey0 := "relation:" + "followby_users:" + strconv.Itoa(int(followInfo.UserId))
-
-	_, err := global.REDIS.SetBit(ctxx, bitmapKey, int64(followInfo.UserId)%4294967296, 0).Result()
-	global.REDIS.SetBit(ctxx, bitmapKey0, int64(followInfo.FollowedUserId)%4294967296, 0).Result()
-
-	if err != nil {
-		return ERROR
-	}
-	return SUCCESS
-}
-
-//关注后Redis操作
-func (rs *RelationService) RedisAddRelation(followInfo model.Follow) bool {
-	var ok int
-	//后面加锁，保证原子性
-	if ok = redisDeleteUserUnRelation(followInfo); ok == ERROR {
-		return false
-	}
-	if ok = redisAddRelation(followInfo); ok == ERROR {
-		return false
-	}
-	if ok = redisAddRelationByUsers(followInfo); ok == ERROR {
-		return false
-	}
-	return true
-}
-
-//取消关注后Redis操作
+// RedisDeleteRelation 取消关注后Redis操作
 func (rs *RelationService) RedisDeleteRelation(followInfo model.Follow) bool {
 	var ok int
 	//后面加锁，保证原子性
-	if ok = redisAddUserUnRelations(followInfo); ok == ERROR {
+	if ok = redisAddUserUnRelations(followInfo); ok == codes.ERROR {
 		return false
 	}
-	if ok = redisUnAddRelation(followInfo); ok == ERROR {
-		return false
-	}
-	if ok = redisDeleteRelationByUsers(followInfo); ok == ERROR {
+	if ok = redisUnAddRelation(followInfo); ok == codes.ERROR {
 		return false
 	}
 	return true
 }
 
+// RedisGetFollowList 从redis种获取用户关注列表
 func (rs *RelationService) RedisGetFollowList(userId int64) ([]int64, error) {
 	var followIds []int64
 	zsetKey := "relation:" + "followed:" + strconv.Itoa(int(userId))
@@ -347,18 +284,16 @@ func (rs *RelationService) RedisGetFollowList(userId int64) ([]int64, error) {
 	if err != nil {
 		return followIds, err
 	}
-	//fmt.Println("values:", values)
 	for _, value := range values {
 		//Member为interface类型不能进行强制转换
 		followid, _ := strconv.ParseInt(value.Member.(string), 10, 64)
 		followIds = append(followIds, followid)
 	}
-
 	return followIds, err
-
 }
 
-func (rs *RelationService) RedisGetFollowedList(userId int64) ([]int64, error) {
+// RedisGetFollowerList 从redis中获取用户粉丝列表
+func (rs *RelationService) RedisGetFollowerList(userId int64) ([]int64, error) {
 	var followIds []int64
 	zsetKey := "relation:" + "follow:" + strconv.Itoa(int(userId))
 	values, err := global.REDIS.ZRevRangeWithScores(ctxx, zsetKey, 0, -1).Result()
@@ -377,9 +312,8 @@ func (rs *RelationService) RedisGetFollowedList(userId int64) ([]int64, error) {
 
 }
 
-//根据UserId获取用户关注列表
+// GetFollowList 根据UserId获取用户关注列表
 func (rs *RelationService) GetFollowList(userId int64) ([]vo.UserVo, error) {
-
 	var followList []model.User
 	var followVoList []vo.UserVo
 
@@ -395,13 +329,13 @@ func (rs *RelationService) GetFollowList(userId int64) ([]vo.UserVo, error) {
 
 }
 
-//根据UserId获取用户粉丝列表
-func (rs *RelationService) GetFollowedList(userId int64) ([]vo.UserVo, error) {
+// GetFollowerList 根据UserId获取用户粉丝列表
+func (rs *RelationService) GetFollowerList(userId int64) ([]vo.UserVo, error) {
 
 	var followList []model.User
 	var followVoList []vo.UserVo
 
-	followIds, err := rs.RedisGetFollowedList(userId)
+	followIds, err := rs.RedisGetFollowerList(userId)
 	if err != nil {
 		return followVoList, err
 	}
@@ -419,7 +353,7 @@ func (rs *RelationService) FollowList2Vo(userId int64, FollowList []model.User) 
 		var isDelete bool
 
 		ok := rs.RedisIsRelationCreated(int64(user.UserId), userId)
-		if ok == BITMAPFOLLOW {
+		if ok == true {
 			isDelete = true
 		} else {
 			isDelete = false
@@ -430,9 +364,9 @@ func (rs *RelationService) FollowList2Vo(userId int64, FollowList []model.User) 
 			Name:     user.Name,
 			IsFollow: isDelete,
 		}
-		count, _ := RedisGetFollowCount(int64(userVo.Id))
-		count1, _ := RedisGetFollowedCount(int64(userVo.Id))
+		count, _ := rs.RedisGetFollowCount(int64(userVo.Id))
 		userVo.FollowCount = uint32(count)
+		count1, _ := rs.RedisGetFollowerCount(int64(userVo.Id))
 		userVo.FollowerCount = uint32(count1)
 
 		userVos = append(userVos, userVo)
@@ -440,30 +374,36 @@ func (rs *RelationService) FollowList2Vo(userId int64, FollowList []model.User) 
 	return userVos
 }
 
-func (rs *RelationService) SynchronizeRelationDBAndRedis() {
+// SynchronizeRelationToDBFromRedis 将redis数据同步到DB
+// 分析：对于每个用户，都会有一个Follower zset和一个Follow zset，如当用户A关注用户B时，必然会导致两个zset的改变（B Follower Zset ++，A Follow Zset ++）
+// 考虑这种对等情况，所以只需要遍历 Follower key 或 Follow key其中一种入库即可
+// 另外还有取关的情况，同样由Unfollower zset 和 Follow zset进行处理
+func SynchronizeRelationToDBFromRedis() {
 	log.Println("同步redis到数据库")
-	zsetkey, err := global.REDIS.Keys(ctxx, "relation:"+"followed:*").Result()
+	zsetkey, err := global.REDIS.Keys(ctxx, "relation:"+"follower:*").Result()
 	log.Println(zsetkey)
 	if err != nil {
 		return
 	}
-	var FollowedUserIds []string
+	var FollowerUserIds []string
+	var rs RelationService
 	for _, userId := range zsetkey {
-		FollowedUserIds, err = global.REDIS.ZRange(ctxx, userId, 0, -1).Result()
+		FollowerUserIds, err = global.REDIS.ZRange(ctxx, userId, 0, -1).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
 		log.Println("like", uid)
-		for _, FollowedUserId := range FollowedUserIds {
+		for _, FollowedUserId := range FollowerUserIds {
 			log.Println("Followed UserId", FollowedUserId)
-			vid := utils.String2Uint64(FollowedUserId)
+			fid := utils.String2Uint64(FollowedUserId)
 			rs.AddAction(model.Follow{
-				FollowedUserId: vid,
-				UserId:         uid,
+				FollowedUserId: uid,
+				UserId:         fid,
+				IsDeleted:      false,
 			})
-
 		}
 	}
+
 	var setkey []string
-	setkey, err = global.REDIS.Keys(ctxx, "relation:"+"unfollowed:*").Result()
+	setkey, err = global.REDIS.Keys(ctxx, "relation:"+"unfollower:*").Result()
 	if err != nil {
 		return
 	}
@@ -473,14 +413,13 @@ func (rs *RelationService) SynchronizeRelationDBAndRedis() {
 		DeleteFollowedUserIds, err = global.REDIS.SMembers(ctxx, userId).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
 		log.Println("unlike:", uid)
-		for _, followeduserId := range DeleteFollowedUserIds {
-			log.Println("followed userId:", followeduserId)
-			vid := utils.String2Uint64(followeduserId)
+		for _, followedUserId := range DeleteFollowedUserIds {
+			log.Println("followed userId:", followedUserId)
+			vid := utils.String2Uint64(followedUserId)
 			rs.RelationAction(model.Follow{
-				UserId:         uid,
-				FollowedUserId: vid,
+				UserId:         vid,
+				FollowedUserId: uid,
 			})
 		}
-
 	}
 }

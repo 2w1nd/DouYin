@@ -14,6 +14,7 @@ func User2UserDTO(user model.User) dto.UserDto {
 		IsFollow:      false,
 	}
 }
+
 func Video2VideoDto(video model.Video) dto.VideoDto {
 	var isFollow, isFavorite bool
 	if len(video.User.FollowedUser) != 0 {

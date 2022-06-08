@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/DouYin/common/constant"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/response"
 	"github.com/DouYin/common/entity/vo"
@@ -28,14 +27,15 @@ func RelationAction(c *gin.Context) {
 		UserId:         user.Id,
 		FollowedUserId: relationReq.ToUserId,
 	}
-	if relationReq.ActionType == constant.NoFOCUS {
+	log.Println("关注尽量")
+	if relationReq.ActionType == 2 {
 		log.Println("取消关注")
 		if /*CommentVos,*/ err := relationService.RedisDeleteRelation(where); !err {
 			response.FailWithMessage("取消关注失败", c)
 		} else {
 			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "取消关注成功"})
 		}
-	} else if relationReq.ActionType == constant.FOCUS {
+	} else if relationReq.ActionType == 1 {
 		log.Println("关注")
 		if /*CommentVos,*/ err := relationService.RedisAddRelation(where); !err {
 			response.FailWithMessage("关注失败", c)
@@ -65,7 +65,7 @@ func FollowList(c *gin.Context) {
 // @param: c
 func FollowerList(c *gin.Context) {
 	userId := utils.String2Uint64(c.Query("user_id"))
-	userList, err := relationService.GetFollowedList(int64((userId)))
+	userList, err := relationService.GetFollowerList(int64((userId)))
 	if err != nil {
 		response.FailWithMessage("获取失败", c)
 	}

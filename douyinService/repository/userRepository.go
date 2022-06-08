@@ -30,12 +30,6 @@ func (u UserRepository) UpdateFollowCount(userId uint64, Type int) bool {
 	query.Find(&user)
 	db := global.DB.Where(user)
 	var out model.User
-	//var Cnt uint32
-	//if cnt > 0 {
-	//	Cnt = int32(cnt)
-	//} else {
-	//	Cnt = int32(-cnt)
-	//}
 	if Type == codes.FOCUS {
 		if err := db.Model(out).Debug().Where(user).Update("follow_count", user.FollowCount+1).Error; err != nil {
 			return false

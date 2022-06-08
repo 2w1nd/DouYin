@@ -6,6 +6,7 @@ import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type FollowRepository struct {
@@ -17,23 +18,28 @@ func (r *FollowRepository) AddFollow(follow model.Follow) bool {
 	where := model.User{
 		UserId: follow.FollowedUserId,
 	}
-
 	if _, err := r.User.GetFirstUser(where); err != nil {
 		return false
 	}
-
 	if err := r.Base.Create(&follow); err != nil {
 		return false
 	}
 	return true
 }
 
-func (r *FollowRepository) UpdateFollowUserId(where interface{}, out interface{}) bool {
-	db := global.DB.Where(where)
-	if err := db.Model(out).Where(where).Update("is_deleted", 0).RowsAffected; err == 0 {
+func (r *FollowRepository) UpdateFollowUserId(where model.Follow, out interface{}) bool {
+	if err := global.DB.Debug().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}, {Name: "followed_user_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"is_deleted"}),
+	}).Create(&where); err != nil {
 		return false
 	}
 	return true
+	//db := global.DB.Where(where)
+	//if err := db.Model(out).Where(where).Update("is_deleted", 0).RowsAffected; err == 0 {
+	//	return false
+	//}
+	//return true
 }
 
 func (r *FollowRepository) DeleteFollowUserId(where interface{}) bool {

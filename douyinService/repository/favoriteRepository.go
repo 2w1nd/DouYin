@@ -24,7 +24,7 @@ func (fr *FavoriteRepository) GetFavoriteByUserIdAndVideoId(userId uint64, video
 	}
 }
 func (fr *FavoriteRepository) AddFavorite(favorite model.Favorite) bool {
-	log.Println("添加到数据库: is_del: ", favorite.IsDeleted)
+	//log.Println("添加到数据库: is_del: ", favorite.IsDeleted)
 	//if err := global.DB.Debug().Clauses(clause.OnConflict{
 	//	Columns:   []clause.Column{{Name: "user_id"}, {Name: "video_id"}},
 	//	DoUpdates: clause.AssignmentColumns([]string{"is_deleted"}),

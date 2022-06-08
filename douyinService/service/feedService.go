@@ -20,6 +20,7 @@ type FeedService struct {
 var videoRepository repository.VideoRepository
 var favoriteService FavoriteService
 var userService UserService
+var relationService RelationService
 
 type VideoMsg struct {
 	VideoID    uint64 `json:"id,omitempty"`
@@ -38,7 +39,6 @@ type VideoMsg struct {
 // @return: []vo.VideoVo
 func (fs *FeedService) Feed(userId uint64, latestTime string) ([]vo.VideoVo, time.Time) {
 	var (
-		//videoData vo.VideoData
 		videoVos  []vo.VideoVo
 		videoList []model.Video
 		nextTime  int64
@@ -49,20 +49,7 @@ func (fs *FeedService) Feed(userId uint64, latestTime string) ([]vo.VideoVo, tim
 		return videoVos, time.Unix(nextTime/1000, 0)
 	}
 
-	//data1, _ := global.REDIS.Get(context.Background(), "videoVos").Result()
-	//if data1 != "" {
-	//	log.Println("从缓存中查询: ", data1)
-	//	err := json.Unmarshal([]byte(data1), &videoData)
-	//	if err != nil {
-	//		return nil, time.Time{}
-	//	}
-	//	if len(videoData.VideoList) != 0 {
-	//		return videoData.VideoList, time.Unix(videoData.NextTime/1000, 0)
-	//	}
-	//}
-
 	// 从数据库中查询
-	log.Println("从数据库中查询")
 	if userId == 0 {
 		videoList = videoRepository.GetVideoWithAuthor(utils.UnixToTime(latestTime))
 	} else {
@@ -75,10 +62,6 @@ func (fs *FeedService) Feed(userId uint64, latestTime string) ([]vo.VideoVo, tim
 	videoVos = fs.videoList2Vo(videoList)
 	// 放入缓存
 	fs.loadFeedDataToRedis(videoList)
-	//videoData.VideoList = videoVos
-	//videoData.NextTime = timeUtil.TimeToUnix(videoList[0].GmtCreated)
-	//data, _ := json.Marshal(videoData)
-	//global.REDIS.Set(context.Background(), "videoVos", data, 10*time.Minute)
 	return videoVos, videoList[0].GmtCreated
 }
 
@@ -91,8 +74,6 @@ func (fs *FeedService) readFeedDataFromRedis(userId uint64) (videoVos []vo.Video
 		videom := utils.SplitStringForList(video, ":")
 		var v VideoMsg
 		err := json.Unmarshal([]byte(videom), &v)
-		log.Println(video)
-		log.Println(videom)
 		if err != nil {
 			log.Println(err)
 		}
@@ -103,22 +84,21 @@ func (fs *FeedService) readFeedDataFromRedis(userId uint64) (videoVos []vo.Video
 		// 查作者名称
 		authorName := fs.getAuthorNameInRedis(videoMsg.AuthorID)
 		// 查粉丝数量，关注数量，当前用户是否关注
-		fs.getFollowCountAndFollowedCountAndIsFollow()
+		followerCount, followCount, isFollow := fs.getFollowCountAndFollowedCountAndIsFollow(userId, videoMsg.AuthorID)
 		// 查点赞数量，当前用户是否点赞
 		favoriteCount, isFavorite := fs.getFavoriteCountAndIsFavorite(userId, videoMsg.VideoID)
-		log.Println("点赞数量：", favoriteCount, videoMsg.VideoID)
+		log.Println("feedService：favoriteCount isFavorite", videoMsg.Title, favoriteCount, isFavorite)
 		// 查评论数量
 		commentCount := fs.getCommentCount(videoMsg.VideoID)
-		log.Println("评论数量：", commentCount, videoMsg.VideoID)
 
 		videoVo := vo.VideoVo{
 			VideoID: videoMsg.VideoID,
 			Author: vo.AuthorVo{
 				UserID:        videoMsg.AuthorID,
 				Name:          authorName,
-				FollowCount:   0,
-				FollowerCount: 0,
-				IsFollow:      false,
+				FollowCount:   followCount,
+				FollowerCount: followerCount,
+				IsFollow:      isFollow,
 			},
 			PlayUrl:       videoMsg.PlayUrl,
 			CoverUrl:      videoMsg.CoverUrl,
@@ -137,9 +117,7 @@ func (fs *FeedService) readFeedDataFromRedis(userId uint64) (videoVos []vo.Video
 
 // 查作者名称
 func (fs *FeedService) getAuthorNameInRedis(authorId uint64) string {
-	log.Println("作者名称")
 	authorName, _ := global.REDIS.HGet(context.Background(), "users:user", strconv.FormatUint(authorId, 10)).Result()
-	log.Println(authorName)
 	if authorName == "" { // 找不到，从数据库找
 		authorName = userService.GetUserName(authorId)
 	}
@@ -147,8 +125,11 @@ func (fs *FeedService) getAuthorNameInRedis(authorId uint64) string {
 }
 
 // 查粉丝数量，关注数量，当前用户是否关注
-func (fs *FeedService) getFollowCountAndFollowedCountAndIsFollow() {
-
+func (fs *FeedService) getFollowCountAndFollowedCountAndIsFollow(myId uint64, authorId uint64) (uint32, uint32, bool) {
+	followerCount, _ := relationService.RedisGetFollowerCount(int64(authorId))
+	followCount, _ := relationService.RedisGetFollowCount(int64(authorId))
+	isFollow := relationService.RedisIsRelationCreated(int64(myId), int64(authorId))
+	return uint32(followerCount), uint32(followCount), isFollow
 }
 
 // 查点赞数量，当前用户是否点赞
@@ -175,7 +156,6 @@ func (fs *FeedService) getFavoriteCountAndIsFavorite(userId uint64, videoId uint
 
 // 查评论数量
 func (fs *FeedService) getCommentCount(videoId uint64) uint32 {
-	log.Println("评论数量")
 	CommentString := "videoComment:comment"
 	var commentVos []vo.CommentVo
 	var commentCount uint32
