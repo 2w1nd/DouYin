@@ -26,3 +26,9 @@ func SplitString(str, c string) (res string) {
 	res = str[idx+1:]
 	return
 }
+
+func SplitStringForList(str, c string) (res string) {
+	idx := strings.Index(str, c)
+	res = str[idx+1:]
+	return
+}
