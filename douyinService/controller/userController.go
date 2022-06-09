@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/DouYin/common/codes"
-	"log"
 	"net/http"
 	"time"
 
@@ -54,7 +53,6 @@ func Login(c *gin.Context) {
 // @Description: 获取登录用户的id，昵称，如果实现社交部分的功能，还会返回关注数的粉丝数
 // @param: c
 func UserInfo(c *gin.Context) {
-	log.Println("用户信息接口")
 	userId := c.Query("user_id")
 	userMsg := service.UserMsg{}
 	if userId == "" {

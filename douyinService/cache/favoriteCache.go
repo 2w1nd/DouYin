@@ -165,9 +165,8 @@ func (fc *FavoriteCache) RedisGetVideoFavoriteCount(videoId int64) (int64, int) 
 }
 
 func SynchronizeFavoriteDBFromRedis() {
-	log.Println("同步redis到数据库")
+	log.Println("同步redis点赞信息到数据库")
 	zsetkey, err := global.REDIS.Keys(ctx, "favorite:"+"user_like_videos:*").Result()
-	log.Println(zsetkey)
 	if err != nil {
 		return
 	}
@@ -175,9 +174,7 @@ func SynchronizeFavoriteDBFromRedis() {
 	for _, userId := range zsetkey {
 		FavoriteVideoIds, err = global.REDIS.ZRange(ctx, userId, 0, -1).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
-		log.Println("like", uid)
 		for _, videoId := range FavoriteVideoIds {
-			log.Println("like video:", videoId)
 			vid := utils.String2Uint64(videoId)
 			favoriteRepository.AddFavorite(model.Favorite{
 				UserId:    uid,
@@ -193,14 +190,11 @@ func SynchronizeFavoriteDBFromRedis() {
 	if err != nil {
 		return
 	}
-	log.Println("unlike setkey: ", setkey)
 	var UnFavoritevideoIds []string
 	for _, userId := range setkey {
 		UnFavoritevideoIds, err = global.REDIS.SMembers(ctx, userId).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
-		log.Println("unlike:", uid)
 		for _, videoId := range UnFavoritevideoIds {
-			log.Println("unlike videoId:", videoId)
 			vid := utils.String2Uint64(videoId)
 			favoriteRepository.AddFavorite(model.Favorite{
 				UserId:    uid,

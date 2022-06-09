@@ -4,7 +4,6 @@ import (
 	"github.com/DouYin/service/controller"
 	"github.com/DouYin/service/middleware"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"time"
 )
 
@@ -26,7 +25,10 @@ func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	apiRouter.GET("/publish/list/", controller.PublishList)
 
 	// extra apis - I
-	apiRouter.POST("/favorite/action/", middleware.JwtMiddleware(), controller.FavoriteAction)
+	apiRouter.POST("/favorite/action/",
+		middleware.JwtMiddleware(),
+		middleware.NewLimiter(3, 3, 1000*time.Millisecond),
+		controller.FavoriteAction)
 	apiRouter.GET("/favorite/list/", controller.FavoriteList)
 	apiRouter.POST("/comment/demo/add/", controller.AddCommentDemo)
 	apiRouter.POST("/comment/action/", middleware.JwtMiddleware(), controller.CommentAction)
@@ -36,10 +38,4 @@ func (rt *Router) InitRouter(r *gin.RouterGroup) {
 	apiRouter.POST("/relation/action/", middleware.JwtMiddleware(), controller.RelationAction)
 	apiRouter.GET("/relation/follow/list/", controller.FollowList)
 	apiRouter.GET("/relation/follower/list/", controller.FollowerList)
-
-	apiRouter.GET("/ping/", middleware.NewLimiter(3, 10, 500*time.Millisecond), func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-
-	})
-
 }

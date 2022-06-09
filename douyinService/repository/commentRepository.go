@@ -3,7 +3,6 @@ package repository
 import (
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
-	"log"
 )
 
 type CommentRepository struct {
@@ -11,7 +10,6 @@ type CommentRepository struct {
 }
 
 func (cr *CommentRepository) AddComment(comment model.Comment) bool {
-	log.Println("数据库写入评论")
 	if err := cr.Base.Create(&comment); err != nil {
 		return false
 	}
@@ -26,7 +24,6 @@ func (cr *CommentRepository) AddComment(comment model.Comment) bool {
 }
 
 func (cr *CommentRepository) DeleteCommentById(where interface{}, id uint64) bool {
-	log.Println("数据库删除评论")
 	var comment model.Comment
 	if err := cr.Base.DeleteSoftByID(where, &comment); err != nil {
 		return false

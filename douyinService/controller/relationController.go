@@ -8,7 +8,6 @@ import (
 	"github.com/DouYin/service/service"
 	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 )
 
@@ -25,20 +24,22 @@ func RelationAction(c *gin.Context) {
 		UserId:         user.Id,
 		FollowedUserId: relationReq.ToUserId,
 	}
-	log.Println("关注尽量")
+	if user.Id == relationReq.ToUserId {
+		response.FailWithMessage("不能关注自己噢~", c)
+		return
+	}
 	if relationReq.ActionType == 2 {
-		log.Println("取消关注")
-		if /*CommentVos,*/ err := relationService.RedisDeleteRelation(where); !err {
+		if err := relationService.RedisDeleteRelation(where); !err {
 			response.FailWithMessage("取消关注失败", c)
 		} else {
-			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "取消关注成功"})
+			response.OkWithMessage("取消关注成功", c)
 		}
 	} else if relationReq.ActionType == 1 {
-		log.Println("关注")
-		if /*CommentVos,*/ err := relationService.RedisAddRelation(where); !err {
+		if err := relationService.RedisAddRelation(where); !err {
 			response.FailWithMessage("关注失败", c)
 		} else {
-			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "关注成功"})
+			response.OkWithMessage("关注成功", c)
+			return
 		}
 	}
 }

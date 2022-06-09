@@ -6,7 +6,6 @@ import (
 	"github.com/DouYin/service/service"
 	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -17,7 +16,6 @@ var publishService service.PublishService
 // @Description: 登录用户选择视频上传
 // @param: c
 func Publish(c *gin.Context) {
-	log.Println("发布视频")
 	data, err := c.FormFile("data")
 	if err != nil {
 		response.FailWithMessage("获取数据失败", c)

@@ -23,7 +23,6 @@ type RelationService struct {
 func (rs *RelationService) FollowerList(userId uint64) []vo.UserVo {
 	var userList []vo.UserVo
 	followedUsers, _ := followRepository.GetFollowedOrFollowUserWithUserId(userId, codes.Followed)
-	log.Println(followedUsers)
 	for _, user := range followedUsers {
 		log.Println(user.UserId)
 	}

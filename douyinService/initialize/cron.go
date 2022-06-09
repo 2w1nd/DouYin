@@ -17,7 +17,7 @@ func Cron() {
 	})
 	// 每10分钟同步一次视频点赞关系
 	_, _ = c.AddFunc("*/10 * * * *", func() {
-		cache.SynchronizeRelationToDBFromRedis()
+		cache.SynchronizeFavoriteDBFromRedis()
 	})
 	c.Start()
 }

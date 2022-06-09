@@ -29,7 +29,7 @@ func (rc *RelationCache) RedisGetFollowerCount(userid int64) (uint32, int) {
 	if err == redis.Nil {
 		return 0, codes.RedisNotFound
 	}
-	return uint32(count), codes.RedisNotFound
+	return uint32(count), codes.RedisFound
 }
 
 // RedisGetFollowCount 根据UserId查询对应用户关注数量
@@ -39,7 +39,7 @@ func (rc *RelationCache) RedisGetFollowCount(userid int64) (uint32, int) {
 	if err == redis.Nil {
 		return 0, codes.RedisNotFound
 	}
-	return uint32(count), codes.RedisNotFound
+	return uint32(count), codes.RedisFound
 }
 
 // RedisIsRelationCreated 查询中是否已记录该关注 方向:User->ToFollowed
@@ -241,9 +241,8 @@ func (rc *RelationCache) RelationAction(where model.Follow) bool {
 // 考虑这种对等情况，所以只需要遍历 Follower key 或 Follow key其中一种入库即可
 // 另外还有取关的情况，同样由Unfollower zset 和 Follow zset进行处理
 func SynchronizeRelationToDBFromRedis() {
-	log.Println("同步redis到数据库")
+	log.Println("同步redis中关注粉丝信息到数据库")
 	zsetkey, err := global.REDIS.Keys(ctxx, "relation:"+"follower:*").Result()
-	log.Println(zsetkey)
 	if err != nil {
 		return
 	}
@@ -253,9 +252,7 @@ func SynchronizeRelationToDBFromRedis() {
 	for _, userId := range zsetkey {
 		FollowerUserIds, err = global.REDIS.ZRange(ctxx, userId, 0, -1).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
-		log.Println("like", uid)
 		for _, FollowedUserId := range FollowerUserIds {
-			log.Println("Followed UserId", FollowedUserId)
 			fid := utils.String2Uint64(FollowedUserId)
 			rs.AddAction(model.Follow{
 				FollowedUserId: uid,
@@ -270,14 +267,11 @@ func SynchronizeRelationToDBFromRedis() {
 	if err != nil {
 		return
 	}
-	log.Println("unfollow setkey: ", setkey)
 	var DeleteFollowedUserIds []string
 	for _, userId := range setkey {
 		DeleteFollowedUserIds, err = global.REDIS.SMembers(ctxx, userId).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))
-		log.Println("unlike:", uid)
 		for _, followedUserId := range DeleteFollowedUserIds {
-			log.Println("followed userId:", followedUserId)
 			vid := utils.String2Uint64(followedUserId)
 			rs.RelationAction(model.Follow{
 				UserId:         vid,

@@ -56,7 +56,6 @@ func (vc *VideoCache) ReadFeedDataFromRedis(userId uint64) (videoVos []vo.VideoV
 		followerCount, followCount, isFollow := vc.getFollowCountAndFollowedCountAndIsFollow(userId, videoMsg.AuthorID)
 		// 查点赞数量，当前用户是否点赞
 		favoriteCount, isFavorite := vc.getFavoriteCountAndIsFavorite(userId, videoMsg.VideoID)
-		log.Println("feedService：favoriteCount isFavorite", videoMsg.Title, favoriteCount, isFavorite)
 		// 查评论数量
 		commentCount := vc.getCommentCount(videoMsg.VideoID)
 
@@ -99,7 +98,7 @@ func (vc *VideoCache) LoadFeedDataToRedis(videoModels []model.Video) {
 		str := global.REDIS.HGet(context.Background(), "videos", strconv.FormatUint(video.VideoId, 10)).Err()
 		if str != nil {
 			global.REDIS.HMSet(context.Background(), "videos", strconv.FormatUint(video.VideoId, 10), videoMsgJson)
-			global.REDIS.RPush(context.Background(), "videoIds", strconv.FormatUint(video.VideoId, 10))
+			global.REDIS.LPush(context.Background(), "videoIds", strconv.FormatUint(video.VideoId, 10))
 		}
 	}
 }
@@ -166,11 +165,11 @@ func (vc *VideoCache) LoadPublishDataToRedis(video model.Video) {
 		CreateTime: utils.TimeToUnix(video.GmtCreated),
 	}
 	videoMsgJson, _ := json.Marshal(videomsg)
-	str := global.REDIS.HGet(context.Background(), "videoIds", strconv.FormatUint(video.VideoId, 10)).Err()
+	str := global.REDIS.HGet(context.Background(), "videos", strconv.FormatUint(video.VideoId, 10)).Err()
 	if str != nil {
-		global.REDIS.RPush(context.Background(), "video", videoMsgJson)
-		global.REDIS.RPush(context.Background(), "userVideos:userVideo"+strconv.FormatUint(video.AuthorId, 10), strconv.FormatUint(video.VideoId, 10))
-		global.REDIS.HMSet(context.Background(), "videoIds", strconv.FormatUint(video.VideoId, 10), strconv.FormatUint(video.AuthorId, 10))
+		global.REDIS.HMSet(context.Background(), "videos", strconv.FormatUint(video.VideoId, 10), videoMsgJson)
+		global.REDIS.LPush(context.Background(), "userVideos:userVideo"+strconv.FormatUint(video.AuthorId, 10), strconv.FormatUint(video.VideoId, 10))
+		global.REDIS.LPush(context.Background(), "videoIds", strconv.FormatUint(video.VideoId, 10))
 	}
 }
 

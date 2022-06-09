@@ -9,7 +9,6 @@ import (
 // UnixToTime 毫秒时间戳转时间
 func UnixToTime(lastTime string) time.Time {
 	timestamp, err := strconv.ParseInt(lastTime, 10, 64)
-	log.Println("timestamp: ", timestamp)
 	if err != nil {
 		log.Println("strconv fail: ", err)
 		return time.Time{}

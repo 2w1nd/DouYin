@@ -30,11 +30,9 @@ func (ps *PublishService) Publish(userId uint64, data *multipart.FileHeader, tit
 		utils.UploadVideo(newKey, data)
 		task.Done()
 	}()
-	log.Println("上次文件，准备存入数据库")
 	path := "http://img.xlong.xyz/video/" + newKey
 	cover := path + "?vframe/jpg/offset/1"
 	//存入数据库
-	log.Println(userId)
 	video := model.Video{
 		VideoId:       uint64(global.ID.Generate()),
 		AuthorId:      userId,
