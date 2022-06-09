@@ -66,7 +66,6 @@ func (rs *RelationService) RedisDeleteRelation(followInfo model.Follow) bool {
 
 // GetFollowList 根据UserId获取用户关注列表
 func (rs *RelationService) GetFollowList(userId int64) ([]vo.UserVo, error) {
-	//var followList []model.User
 	var followVoList []vo.UserVo
 
 	followIds, err := rs.relationCache.RedisGetFollowList(userId)
@@ -87,13 +86,11 @@ func (rs *RelationService) GetFollowList(userId int64) ([]vo.UserVo, error) {
 		}
 		followVoList = append(followVoList, followVo)
 	}
-	//followVoList = rs.FollowList2Vo(userId, followList)
 	return followVoList, nil
 }
 
 // GetFollowerList 根据UserId获取用户粉丝列表
 func (rs *RelationService) GetFollowerList(userId int64) ([]vo.UserVo, error) {
-	//var followList []model.User
 	var followVoList []vo.UserVo
 
 	followerIds, err := rs.relationCache.RedisGetFollowerList(userId)
@@ -115,7 +112,6 @@ func (rs *RelationService) GetFollowerList(userId int64) ([]vo.UserVo, error) {
 		}
 		followVoList = append(followVoList, followVo)
 	}
-	//followVoList = rs.FollowList2Vo(userId, followList)
 	return followVoList, nil
 }
 

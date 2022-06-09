@@ -225,13 +225,15 @@ func (rc *RelationCache) AddAction(where model.Follow) bool {
 
 // RelationAction 取消关注到DB
 func (rc *RelationCache) RelationAction(where model.Follow) bool {
+	followCount, _ := rc.RedisGetFollowCount(int64(where.UserId))
+	followerCount, _ := rc.RedisGetFollowerCount(int64(where.UserId))
 	if isOk := followRepository.DeleteFollowUserId(where); !isOk {
 		return false
 	}
-	if IsOk := userRepository.UpdateFollowCount(where.UserId, codes.NoFOCUS); !IsOk {
+	if IsOk := userRepository.UpdateFollowCount(where.UserId, followCount); !IsOk {
 		return false
 	}
-	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, codes.NoFOCUS); !IsOk {
+	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, followerCount); !IsOk {
 		return false
 	}
 	return true
@@ -242,19 +244,10 @@ func (rc *RelationCache) GetFollowerCountAndFollowCountAndIsFollow(myId uint64, 
 	var (
 		followerCount, followCount uint32
 		isFollow                   bool
-		//code1, code2, code3        int
 	)
 	followerCount, _ = relationCache.RedisGetFollowerCount(int64(authorId))
 	followCount, _ = relationCache.RedisGetFollowCount(int64(authorId))
-	//if code1 == codes.RedisNotFound || code2 == codes.RedisNotFound { // 查DB
-	//	where := model.User{UserId: authorId}
-	//	author, _ := userRepository.GetFirstUser(where)
-	//	followerCount, followCount = author.FollowerCount, author.FollowCount
-	//}
 	isFollow, _ = relationCache.RedisIsRelationCreated(int64(myId), int64(authorId))
-	//if code3 == codes.RedisNotFound {
-	//	isFollow = userRepository.IsFollow(myId, authorId) // 查DB
-	//}
 	return followerCount, followCount, isFollow
 }
 

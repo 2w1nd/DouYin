@@ -7,6 +7,7 @@ import (
 
 /**
  * * /5 * * * * * 每5秒一次
+ * @every 1s
  */
 
 func Cron() {

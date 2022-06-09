@@ -37,6 +37,7 @@ func (vc *VideoCache) ReadFeedDataFromRedis(userId uint64) (videoVos []vo.VideoV
 	// 查视频数据
 	videosIds, _ := global.REDIS.LRange(context.Background(), "videoIds", 0, -1).Result()
 	videoVos, nextTime = vc.GetVideoVoByIdsFromRedis(videosIds, userId)
+	log.Println("nextTime:", nextTime)
 	return videoVos, nextTime
 }
 
