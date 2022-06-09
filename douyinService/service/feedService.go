@@ -1,53 +1,35 @@
 package service
 
 import (
-	"encoding/json"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
-	"github.com/DouYin/service/global"
-	"github.com/DouYin/service/repository"
+	"github.com/DouYin/service/cache"
 	"github.com/DouYin/service/utils"
-	"golang.org/x/net/context"
-	"log"
 	"time"
 )
 
 type FeedService struct {
+	videoCache cache.VideoCache
 }
 
-var videoRepository repository.VideoRepository
-
-// Feed
-// @Description: 视频流接口
-// @receiver: fs
-// @param: token
-// @param: latestTime
-// @return: []vo.VideoVo
-func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Time) {
+// Feed 视频流接口
+func (fs *FeedService) Feed(userId uint64, latestTime string) ([]vo.VideoVo, time.Time) {
 	var (
-		videoData vo.VideoData
 		videoVos  []vo.VideoVo
 		videoList []model.Video
-		timeUtil  utils.Time
+		nextTime  int64
 	)
-	// 从缓存查询
-	data1, _ := global.REDIS.Get(context.Background(), "videoVos").Result()
-	if data1 != "" {
-		log.Println("从缓存中查询")
-		err := json.Unmarshal([]byte(data1), &videoData)
-		if err != nil {
-			return nil, time.Time{}
-		}
-		if len(videoData.VideoList) != 0 {
-			return videoData.VideoList, time.Unix(videoData.NextTime/1000, 0)
-		}
+	//从缓存查询
+	videoVos, nextTime = fs.videoCache.ReadFeedDataFromRedis(userId)
+	if len(videoVos) != 0 {
+		return videoVos, time.Unix(nextTime/1000, 0)
 	}
+
 	// 从数据库中查询
-	log.Println("从数据库中查询")
-	if id == 0 {
-		videoList = videoRepository.GetVideoWithAuthor(timeUtil.UnixToTime(latestTime))
+	if userId == 0 {
+		videoList = videoRepository.GetVideoWithAuthor(utils.UnixToTime(latestTime))
 	} else {
-		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(timeUtil.UnixToTime(latestTime), id)
+		videoList = videoRepository.GetVideoWithAuthorAndFollowAndFavorite(utils.UnixToTime(latestTime), userId)
 	}
 	if len(videoList) == 0 {
 		return []vo.VideoVo{}, time.Time{}
@@ -55,18 +37,11 @@ func (fs *FeedService) Feed(id uint64, latestTime string) ([]vo.VideoVo, time.Ti
 
 	videoVos = fs.videoList2Vo(videoList)
 	// 放入缓存
-	videoData.VideoList = videoVos
-	videoData.NextTime = timeUtil.TimeToUnix(videoList[0].GmtCreated)
-	data, _ := json.Marshal(videoData)
-	global.REDIS.Set(context.Background(), "videoVos", data, 10*time.Minute)
+	fs.videoCache.LoadFeedDataToRedis(videoList)
 	return videoVos, videoList[0].GmtCreated
 }
 
-//
-// @Description: 将查出来的数据传入vo
-// @receiver: fs
-// @param: videoList
-// @return: []vo.VideoVo
+// videoList2Vo 将查出来的数据传入vo
 func (fs *FeedService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 	var videoVos []vo.VideoVo
 	for _, video := range videoList {

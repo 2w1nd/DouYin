@@ -54,17 +54,17 @@ func FavoriteAction(c *gin.Context) {
 		//存入Redis
 		ok = favoriteService.RedisAddFavorite(favoriteInfo)
 		if ok == true {
-			c.JSON(0, response.Response{response.SUCCESS, "点赞成功"})
+			c.JSON(0, response.Response{StatusCode: response.SUCCESS, StatusMsg: "点赞成功"})
 		} else {
-			c.JSON(-1, response.Response{response.ERROR, "点赞失败"})
+			c.JSON(-1, response.Response{StatusCode: response.ERROR, StatusMsg: "点赞失败"})
 		}
 	} else {
 		//从Redis中删除
 		ok = favoriteService.RedisDeleteFavorite(favoriteInfo)
 		if ok == true {
-			c.JSON(0, response.Response{response.SUCCESS, "取消赞成功"})
+			c.JSON(0, response.Response{StatusCode: response.SUCCESS, StatusMsg: "取消赞成功"})
 		} else {
-			c.JSON(-1, response.Response{response.ERROR, "取消赞失败"})
+			c.JSON(-1, response.Response{StatusCode: response.ERROR, StatusMsg: "取消赞失败"})
 		}
 	}
 
@@ -79,19 +79,19 @@ func FavoriteList(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(response.ERROR, vo.FavoriteListVo{
-			Response: response.Response{-1, "操作失败"},
+			Response: response.Response{StatusCode: -1, StatusMsg: "操作失败"},
 		})
 	}
 	//在Redis中查询并返回
 	videos, err := favoriteService.GetFavoriteList(userId)
 	if err != nil {
 		c.JSON(response.ERROR, vo.FavoriteListVo{
-			Response: response.Response{-1, "操作失败"},
+			Response: response.Response{StatusCode: -1, StatusMsg: "操作失败"},
 		})
 	}
 
 	c.JSON(response.SUCCESS, vo.FavoriteListVo{
-		Response:  response.Response{0, "操作成功"},
+		Response:  response.Response{StatusMsg: "操作成功"},
 		VideoList: videos,
 	})
 

@@ -1,11 +1,12 @@
 package repository
 
 import (
-	"github.com/DouYin/common/constant"
+	"github.com/DouYin/common/codes"
 	"github.com/DouYin/common/entity/dto"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type FollowRepository struct {
@@ -17,23 +18,28 @@ func (r *FollowRepository) AddFollow(follow model.Follow) bool {
 	where := model.User{
 		UserId: follow.FollowedUserId,
 	}
-
 	if _, err := r.User.GetFirstUser(where); err != nil {
 		return false
 	}
-
 	if err := r.Base.Create(&follow); err != nil {
 		return false
 	}
 	return true
 }
 
-func (r *FollowRepository) UpdateFollowUserId(where interface{}, out interface{}) bool {
-	db := global.DB.Where(where)
-	if err := db.Model(out).Where(where).Update("is_deleted", 0).RowsAffected; err == 0 {
+func (r *FollowRepository) UpdateFollowUserId(where model.Follow, out interface{}) bool {
+	if err := global.DB.Debug().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}, {Name: "followed_user_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"is_deleted"}),
+	}).Create(&where); err != nil {
 		return false
 	}
 	return true
+	//db := global.DB.Where(where)
+	//if err := db.Model(out).Where(where).Update("is_deleted", 0).RowsAffected; err == 0 {
+	//	return false
+	//}
+	//return true
 }
 
 func (r *FollowRepository) DeleteFollowUserId(where interface{}) bool {
@@ -57,6 +63,7 @@ func (r *FollowRepository) GetFollowerListByUserId(id uint64) ([]model.Follow, e
 	return followList, nil
 }
 
+// GetFollowedOrFollowUserWithUserId 获得关注列表或粉丝列表，Followed是粉丝列表，Follow是关注列表
 func (r *FollowRepository) GetFollowedOrFollowUserWithUserId(id uint64, Type int) ([]dto.FollowDto, error) {
 	var followedList []dto.FollowDto
 
@@ -64,11 +71,11 @@ func (r *FollowRepository) GetFollowedOrFollowUserWithUserId(id uint64, Type int
 	var sqlQ string
 	subQuery = global.DB.Model(model.Follow{}).Select("user_id", "followed_user_id", "is_deleted")
 	subQuery1 = global.DB.Model(model.Follow{}).Select("user_id", "followed_user_id", "is_deleted")
-	if Type == constant.Followed {
+	if Type == codes.Followed {
 		subQuery = subQuery.Where("followed_user_id = ?", id)
 		subQuery1 = subQuery1.Where("user_id = ?", id)
 		sqlQ = "LEFT JOIN douyin_user on a.user_id = douyin_user.user_id"
-	} else if Type == constant.Follow {
+	} else if Type == codes.Follow {
 		subQuery = subQuery.Where("user_id = ?", id)
 		subQuery1 = subQuery1.Where("followed_user_id = ?", id)
 		sqlQ = "LEFT JOIN douyin_user on a.followed_user_id = douyin_user.user_id"

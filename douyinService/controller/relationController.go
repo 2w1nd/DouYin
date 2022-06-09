@@ -1,20 +1,17 @@
 package controller
 
 import (
-	"github.com/DouYin/common/constant"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/response"
 	"github.com/DouYin/common/entity/vo"
+	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/service"
 	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 )
 
 var relationService service.RelationService
-
-const ()
 
 // RelationAction
 // @Description: 登录用户对其他用户进行关注或取消关注
@@ -23,19 +20,26 @@ func RelationAction(c *gin.Context) {
 	var relationReq request.RelationReq
 	_ = c.ShouldBindQuery(&relationReq)
 	user := utils.GetUserContext(c)
-	if relationReq.ActionType == constant.NoFOCUS {
-		log.Println("取消关注")
-		if /*CommentVos,*/ err := relationService.RelationAction(relationReq, user.Id); !err {
+	where := model.Follow{
+		UserId:         user.Id,
+		FollowedUserId: relationReq.ToUserId,
+	}
+	if user.Id == relationReq.ToUserId {
+		response.FailWithMessage("不能关注自己噢~", c)
+		return
+	}
+	if relationReq.ActionType == 2 {
+		if err := relationService.RedisDeleteRelation(where); !err {
 			response.FailWithMessage("取消关注失败", c)
 		} else {
-			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "取消关注成功"})
+			response.OkWithMessage("取消关注成功", c)
 		}
-	} else if relationReq.ActionType == constant.FOCUS {
-		log.Println("关注")
-		if /*CommentVos,*/ err := relationService.AddAction(relationReq, user.Id); !err {
+	} else if relationReq.ActionType == 1 {
+		if err := relationService.RedisAddRelation(where); !err {
 			response.FailWithMessage("关注失败", c)
 		} else {
-			c.JSON(http.StatusOK, response.Response{StatusCode: response.SUCCESS, StatusMsg: "关注成功"})
+			response.OkWithMessage("关注成功", c)
+			return
 		}
 	}
 }
@@ -45,7 +49,10 @@ func RelationAction(c *gin.Context) {
 // @param: c
 func FollowList(c *gin.Context) {
 	userId := utils.String2Uint64(c.Query("user_id"))
-	userList := relationService.FollowList(userId)
+	userList, err := relationService.GetFollowList(int64(userId))
+	if err != nil {
+		response.FailWithMessage("获取失败", c)
+	}
 	c.JSON(http.StatusOK, vo.UserListVo{
 		Response: response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
 		UserList: userList,
@@ -57,7 +64,10 @@ func FollowList(c *gin.Context) {
 // @param: c
 func FollowerList(c *gin.Context) {
 	userId := utils.String2Uint64(c.Query("user_id"))
-	userList := relationService.FollowerList(userId)
+	userList, err := relationService.GetFollowerList(int64(userId))
+	if err != nil {
+		response.FailWithMessage("获取失败", c)
+	}
 	c.JSON(http.StatusOK, vo.UserListVo{
 		Response: response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
 		UserList: userList,

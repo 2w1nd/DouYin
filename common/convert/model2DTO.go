@@ -2,6 +2,7 @@ package convert
 
 import (
 	"github.com/DouYin/common/entity/dto"
+	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
 )
 
@@ -14,6 +15,7 @@ func User2UserDTO(user model.User) dto.UserDto {
 		IsFollow:      false,
 	}
 }
+
 func Video2VideoDto(video model.Video) dto.VideoDto {
 	var isFollow, isFavorite bool
 	if len(video.User.FollowedUser) != 0 {
@@ -42,10 +44,35 @@ func Video2VideoDto(video model.Video) dto.VideoDto {
 		IsFavorite:    isFavorite,
 	}
 }
+
 func VideoList2VideoDtoList(videoList []model.Video) []dto.VideoDto {
 	var videoDtoList []dto.VideoDto
 	for i := range videoList {
 		videoDtoList = append(videoDtoList, Video2VideoDto(videoList[i]))
 	}
 	return videoDtoList
+}
+
+func VideoVos2VideoDto(videoVos []vo.VideoVo) []dto.VideoDto {
+	var videoDtos []dto.VideoDto
+	for _, videoVo := range videoVos {
+		videoDto := dto.VideoDto{
+			Id: videoVo.VideoID,
+			Author: dto.UserDto{
+				Id:            videoVo.Author.UserID,
+				Name:          videoVo.Author.Name,
+				FollowCount:   videoVo.Author.FollowCount,
+				FollowerCount: videoVo.Author.FollowerCount,
+				IsFollow:      videoVo.Author.IsFollow,
+			},
+			PlayURL:       videoVo.PlayUrl,
+			CoverURL:      videoVo.CoverUrl,
+			Title:         videoVo.Title,
+			FavoriteCount: videoVo.FavoriteCount,
+			CommentCount:  videoVo.CommentCount,
+			IsFavorite:    videoVo.IsFavorite,
+		}
+		videoDtos = append(videoDtos, videoDto)
+	}
+	return videoDtos
 }

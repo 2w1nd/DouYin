@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/DouYin/common/constant"
 	"github.com/DouYin/common/model"
 	"github.com/DouYin/service/global"
 )
@@ -21,7 +20,7 @@ func (u UserRepository) QueryUserDtoInfo(userId uint64) model.User {
 	return user
 }
 
-func (u UserRepository) UpdateFollowCount(userId uint64, Type int) bool {
+func (u UserRepository) UpdateFollowCount(userId uint64, followCount uint32) bool {
 	var user model.User
 	query := global.DB.Debug().
 		Model(model.User{})
@@ -30,25 +29,14 @@ func (u UserRepository) UpdateFollowCount(userId uint64, Type int) bool {
 	query.Find(&user)
 	db := global.DB.Where(user)
 	var out model.User
-	//var Cnt uint32
-	//if cnt > 0 {
-	//	Cnt = int32(cnt)
-	//} else {
-	//	Cnt = int32(-cnt)
-	//}
-	if Type == constant.FOCUS {
-		if err := db.Model(out).Debug().Where(user).Update("follow_count", user.FollowCount+1).Error; err != nil {
-			return false
-		}
-	} else if Type == constant.NoFOCUS {
-		if err := db.Model(out).Debug().Where(user).Update("follow_count", user.FollowCount-1).Error; err != nil {
-			return false
-		}
+	if err := db.Model(out).Debug().Where(user).Update("follow_count", followCount).Error; err != nil {
+		return false
 	}
+
 	return true
 }
 
-func (u UserRepository) UpdateFollowerCount(userId uint64, Type int) bool {
+func (u UserRepository) UpdateFollowerCount(userId uint64, followerCount uint32) bool {
 	var user model.User
 	query := global.DB.Debug().
 		Model(model.User{})
@@ -57,21 +45,11 @@ func (u UserRepository) UpdateFollowerCount(userId uint64, Type int) bool {
 	query.Find(&user)
 	db := global.DB.Where(user)
 	var out model.User
-	//var Cnt uint32
-	//if cnt > 0 {
-	//	Cnt = uint32(cnt)
-	//} else {
-	//	Cnt = uint32(-cnt)
-	//}
-	if Type == constant.FOCUS {
-		if err := db.Model(out).Debug().Where(user).Update("follower_count", user.FollowerCount+1).Error; err != nil {
-			return false
-		}
-	} else if Type == constant.NoFOCUS {
-		if err := db.Model(out).Debug().Where(user).Update("follower_count", user.FollowerCount-1).Error; err != nil {
-			return false
-		}
+
+	if err := db.Model(out).Debug().Where(user).Update("follower_count", followerCount).Error; err != nil {
+		return false
 	}
+
 	return true
 }
 
