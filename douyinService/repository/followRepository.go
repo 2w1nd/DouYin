@@ -63,6 +63,7 @@ func (r *FollowRepository) GetFollowerListByUserId(id uint64) ([]model.Follow, e
 	return followList, nil
 }
 
+// GetFollowedOrFollowUserWithUserId 获得关注列表或粉丝列表，Followed是粉丝列表，Follow是关注列表
 func (r *FollowRepository) GetFollowedOrFollowUserWithUserId(id uint64, Type int) ([]dto.FollowDto, error) {
 	var followedList []dto.FollowDto
 

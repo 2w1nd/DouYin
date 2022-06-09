@@ -44,6 +44,7 @@ func (us *UserService) Register(user *model.User) (code int, msg, token string, 
 
 	// 注册成功，返回用户id和权限jwt token
 	token, err = middleware.CreateToken(user.UserId, user.Username)
+	global.REDIS.HMSet(context.Background(), "users:user", user.UserId, user.Username)
 	if err != nil {
 		return codes.ERROR, err.Error(), "", 0
 	}
@@ -74,7 +75,6 @@ func (us *UserService) Login(username, password string) (code int, msg, token st
 }
 
 func (us *UserService) UserInfo(id string, myuserId string) (code int, msg string, userMsg UserMsg) {
-	log.Println("查看用户信息")
 	userId, err := strconv.Atoi(id)
 	if err != nil {
 		log.Println("类型转化失败")
@@ -99,8 +99,6 @@ func (us *UserService) UserInfo(id string, myuserId string) (code int, msg strin
 				FollowerCount: user.FollowerCount,
 				IsFollow:      false,
 			}
-			log.Println("查不到")
-			log.Println("user"+myuserId, userMsg.Name)
 			global.REDIS.HMSet(context.Background(), "users:user", myuserId, userMsg.Name)
 			return codes.SUCCESS, "未关注", userMsg
 		}

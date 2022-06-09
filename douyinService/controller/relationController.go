@@ -14,8 +14,6 @@ import (
 
 var relationService service.RelationService
 
-const ()
-
 // RelationAction
 // @Description: 登录用户对其他用户进行关注或取消关注
 // @param: c
@@ -65,7 +63,7 @@ func FollowList(c *gin.Context) {
 // @param: c
 func FollowerList(c *gin.Context) {
 	userId := utils.String2Uint64(c.Query("user_id"))
-	userList, err := relationService.GetFollowerList(int64((userId)))
+	userList, err := relationService.GetFollowerList(int64(userId))
 	if err != nil {
 		response.FailWithMessage("获取失败", c)
 	}

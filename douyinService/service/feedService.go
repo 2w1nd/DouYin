@@ -1,42 +1,18 @@
 package service
 
 import (
-	"encoding/json"
-	"github.com/DouYin/common/codes"
 	"github.com/DouYin/common/entity/vo"
 	"github.com/DouYin/common/model"
-	"github.com/DouYin/service/global"
-	"github.com/DouYin/service/repository"
+	"github.com/DouYin/service/cache"
 	"github.com/DouYin/service/utils"
-	"golang.org/x/net/context"
-	"log"
-	"strconv"
 	"time"
 )
 
 type FeedService struct {
+	videoCache cache.VideoCache
 }
 
-var videoRepository repository.VideoRepository
-var favoriteService FavoriteService
-var userService UserService
-var relationService RelationService
-
-type VideoMsg struct {
-	VideoID    uint64 `json:"id,omitempty"`
-	AuthorID   uint64 `json:"author_id,omitempty"`
-	PlayUrl    string `json:"play_url,omitempty"`
-	CoverUrl   string `json:"cover_url,omitempty"`
-	Title      string `json:"title,omitempty"`
-	CreateTime int64  `json:"create_time"`
-}
-
-// Feed
-// @Description: 视频流接口
-// @receiver: fs
-// @param: token
-// @param: latestTime
-// @return: []vo.VideoVo
+// Feed 视频流接口
 func (fs *FeedService) Feed(userId uint64, latestTime string) ([]vo.VideoVo, time.Time) {
 	var (
 		videoVos  []vo.VideoVo
@@ -44,7 +20,7 @@ func (fs *FeedService) Feed(userId uint64, latestTime string) ([]vo.VideoVo, tim
 		nextTime  int64
 	)
 	//从缓存查询
-	videoVos, nextTime = fs.readFeedDataFromRedis(userId)
+	videoVos, nextTime = fs.videoCache.ReadFeedDataFromRedis(userId)
 	if len(videoVos) != 0 {
 		return videoVos, time.Unix(nextTime/1000, 0)
 	}
@@ -61,144 +37,11 @@ func (fs *FeedService) Feed(userId uint64, latestTime string) ([]vo.VideoVo, tim
 
 	videoVos = fs.videoList2Vo(videoList)
 	// 放入缓存
-	fs.loadFeedDataToRedis(videoList)
+	fs.videoCache.LoadFeedDataToRedis(videoList)
 	return videoVos, videoList[0].GmtCreated
 }
 
-func (fs *FeedService) readFeedDataFromRedis(userId uint64) (videoVos []vo.VideoVo, nextTime int64) {
-	// 查视频数据
-	var videoMsgs []VideoMsg
-	videosIds, _ := global.REDIS.LRange(context.Background(), "videoIds", 0, -1).Result()
-	for _, videoId := range videosIds {
-		video := global.REDIS.HGet(context.Background(), "videos", videoId).String()
-		videom := utils.SplitStringForList(video, ":")
-		var v VideoMsg
-		err := json.Unmarshal([]byte(videom), &v)
-		if err != nil {
-			log.Println(err)
-		}
-		videoMsgs = append(videoMsgs, v)
-	}
-
-	for _, videoMsg := range videoMsgs {
-		// 查作者名称
-		authorName := fs.getAuthorNameInRedis(videoMsg.AuthorID)
-		// 查粉丝数量，关注数量，当前用户是否关注
-		followerCount, followCount, isFollow := fs.getFollowCountAndFollowedCountAndIsFollow(userId, videoMsg.AuthorID)
-		// 查点赞数量，当前用户是否点赞
-		favoriteCount, isFavorite := fs.getFavoriteCountAndIsFavorite(userId, videoMsg.VideoID)
-		log.Println("feedService：favoriteCount isFavorite", videoMsg.Title, favoriteCount, isFavorite)
-		// 查评论数量
-		commentCount := fs.getCommentCount(videoMsg.VideoID)
-
-		videoVo := vo.VideoVo{
-			VideoID: videoMsg.VideoID,
-			Author: vo.AuthorVo{
-				UserID:        videoMsg.AuthorID,
-				Name:          authorName,
-				FollowCount:   followCount,
-				FollowerCount: followerCount,
-				IsFollow:      isFollow,
-			},
-			PlayUrl:       videoMsg.PlayUrl,
-			CoverUrl:      videoMsg.CoverUrl,
-			FavoriteCount: favoriteCount,
-			CommentCount:  commentCount,
-			IsFavorite:    isFavorite,
-			Title:         videoMsg.Title,
-		}
-		videoVos = append(videoVos, videoVo)
-	}
-	if len(videoMsgs) >= 1 {
-		nextTime = videoMsgs[len(videoMsgs)-1].CreateTime
-	}
-	return videoVos, nextTime
-}
-
-// 查作者名称
-func (fs *FeedService) getAuthorNameInRedis(authorId uint64) string {
-	authorName, _ := global.REDIS.HGet(context.Background(), "users:user", strconv.FormatUint(authorId, 10)).Result()
-	if authorName == "" { // 找不到，从数据库找
-		authorName = userService.GetUserName(authorId)
-	}
-	return authorName
-}
-
-// 查粉丝数量，关注数量，当前用户是否关注
-func (fs *FeedService) getFollowCountAndFollowedCountAndIsFollow(myId uint64, authorId uint64) (uint32, uint32, bool) {
-	followerCount, _ := relationService.RedisGetFollowerCount(int64(authorId))
-	followCount, _ := relationService.RedisGetFollowCount(int64(authorId))
-	isFollow := relationService.RedisIsRelationCreated(int64(myId), int64(authorId))
-	return uint32(followerCount), uint32(followCount), isFollow
-}
-
-// 查点赞数量，当前用户是否点赞
-func (fs *FeedService) getFavoriteCountAndIsFavorite(userId uint64, videoId uint64) (uint32, bool) {
-	isFavorite := favoriteService.RedisIsUserLikeVideosCreated(int64(userId), int64(videoId))
-	var isFav bool
-	if isFavorite == codes.BITMAPLIKE {
-		isFav = true
-	} else if isFavorite == codes.BITMAPUNLIKE {
-		isFav = false
-	} else if isFavorite == codes.ERROR { // 查数据库，如果没查到默认false
-		isFav = favoriteService.DBIsUserLikeVideosCreated(int64(userId), int64(videoId))
-	}
-	var favoriteCount uint32
-	redisFavCount, _ := RedisGetVideoFavoriteCount(int64(videoId))
-	if redisFavCount == 0 {
-		video := videoRepository.GetVideoByVideoId(videoId) // 查数据库
-		favoriteCount = video.FavoriteCount
-	} else {
-		favoriteCount = uint32(redisFavCount)
-	}
-	return favoriteCount, isFav
-}
-
-// 查评论数量
-func (fs *FeedService) getCommentCount(videoId uint64) uint32 {
-	CommentString := "videoComment:comment"
-	var commentVos []vo.CommentVo
-	var commentCount uint32
-	data, _ := global.REDIS.Get(context.Background(), CommentString+strconv.FormatUint(videoId, 10)).Result()
-	if data != "" {
-		err := json.Unmarshal([]byte(data), &commentVos)
-		if err != nil {
-			log.Println(err)
-		}
-		commentCount = uint32(len(commentVos))
-	} else { // 从数据库中找
-		video := videoRepository.GetVideoByVideoId(videoId)
-		commentCount = video.CommentCount
-	}
-	return commentCount
-}
-
-func (fs *FeedService) loadFeedDataToRedis(videoModels []model.Video) {
-	for _, video := range videoModels {
-		videomsg := VideoMsg{
-			VideoID:    video.VideoId,
-			AuthorID:   video.AuthorId,
-			PlayUrl:    video.Path,
-			CoverUrl:   video.CoverPath,
-			Title:      video.Title,
-			CreateTime: utils.TimeToUnix(video.GmtCreated),
-		}
-		//videoIdString := strconv.FormatUint(video.VideoId, 10)
-		videoMsgJson, _ := json.Marshal(videomsg)
-		//log.Println(videoMsgJson)
-		str := global.REDIS.HGet(context.Background(), "videos", strconv.FormatUint(video.VideoId, 10)).Err()
-		if str != nil {
-			global.REDIS.HMSet(context.Background(), "videos", strconv.FormatUint(video.VideoId, 10), videoMsgJson)
-			global.REDIS.RPush(context.Background(), "videoIds", strconv.FormatUint(video.VideoId, 10))
-		}
-	}
-}
-
-//
-// @Description: 将查出来的数据传入vo
-// @receiver: fs
-// @param: videoList
-// @return: []vo.VideoVo
+// videoList2Vo 将查出来的数据传入vo
 func (fs *FeedService) videoList2Vo(videoList []model.Video) []vo.VideoVo {
 	var videoVos []vo.VideoVo
 	for _, video := range videoList {

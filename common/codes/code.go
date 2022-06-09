@@ -14,4 +14,7 @@ const (
 	BITMAPUNLIKE  int = 202
 	ALREADYEXIST  int = 203
 	ALREADYDELETE int = 204
+
+	RedisNotFound int = 404
+	RedisFound    int = 405
 )
