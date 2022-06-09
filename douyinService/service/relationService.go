@@ -77,7 +77,7 @@ func (rs *RelationService) GetFollowList(userId int64) ([]vo.UserVo, error) {
 		// 查名称
 		followName := rs.userCache.GetUserNameById(followId)
 		// 查粉丝数量，关注数量，当前用户是否关注了该用户
-		followerCount, followCount, isFollow := rs.videoCache.GetFollowerCountAndFollowCountAndIsFollow(uint64(userId), utils.String2Uint64(followId))
+		followerCount, followCount, isFollow := rs.relationCache.GetFollowerCountAndFollowCountAndIsFollow(uint64(userId), utils.String2Uint64(followId))
 		followVo := vo.UserVo{
 			Id:            utils.String2Uint64(followId),
 			Name:          followName,
@@ -105,7 +105,7 @@ func (rs *RelationService) GetFollowerList(userId int64) ([]vo.UserVo, error) {
 		// 查名称
 		followName := rs.userCache.GetUserNameById(followerId)
 		// 查粉丝数量，关注数量，当前用户是否关注了该用户
-		followerCount, followCount, isFollow := rs.videoCache.GetFollowerCountAndFollowCountAndIsFollow(uint64(userId), utils.String2Uint64(followerId))
+		followerCount, followCount, isFollow := rs.relationCache.GetFollowerCountAndFollowCountAndIsFollow(uint64(userId), utils.String2Uint64(followerId))
 		followVo := vo.UserVo{
 			Id:            utils.String2Uint64(followerId),
 			Name:          followName,

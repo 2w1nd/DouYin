@@ -19,6 +19,8 @@ var (
 
 type FavoriteService struct {
 	favoriteCache cache.FavoriteCache
+	videoCache    cache.VideoCache
+	userCache     cache.UserCache
 }
 
 // DBIsUserLikeVideosCreated 查询db中是否已记录该点赞 方向:User->Videos
@@ -62,9 +64,20 @@ func (fs *FavoriteService) RedisDeleteFavorite(favoriteInfo model.Favorite) bool
 	return true
 }
 
-// RedisGetFavoriteList 返回用户喜欢视频列表
-func (fs *FavoriteService) RedisGetFavoriteList(userId int64) ([]int64, error) {
-	var videoIds []int64
+// GetFavoriteList 根据UserId获取用户点赞列表
+func (fs *FavoriteService) GetFavoriteList(userId int64) ([]vo.VideoVo, error) {
+	var videoVoList []vo.VideoVo
+	videoIds, err := fs.RedisGetFavoriteIDs(userId)
+	if err != nil {
+		return videoVoList, err
+	}
+	videoVoList, _ = fs.videoCache.GetVideoVoByIdsFromRedis(videoIds, uint64(userId))
+	return videoVoList, nil
+}
+
+// RedisGetFavoriteIDs 返回用户喜欢视频IDs
+func (fs *FavoriteService) RedisGetFavoriteIDs(userId int64) ([]string, error) {
+	var videoIds []string
 	zsetKey := "favorite:" + "user_like_videos:" + strconv.Itoa(int(userId))
 	values, err := global.REDIS.ZRevRangeWithScores(ctx, zsetKey, 0, -1).Result()
 
@@ -73,26 +86,10 @@ func (fs *FavoriteService) RedisGetFavoriteList(userId int64) ([]int64, error) {
 	}
 	for _, value := range values {
 		//Member为interface类型不能进行强制转换
-		videoid, _ := strconv.ParseInt(value.Member.(string), 10, 64)
+		videoid, _ := value.Member.(string)
 		videoIds = append(videoIds, videoid)
 	}
 	return videoIds, err
-}
-
-// GetFavoriteList 根据UserId获取用户点赞列表
-func (fs *FavoriteService) GetFavoriteList(userId int64) ([]vo.VideoVo, error) {
-	var videoList []model.Video
-	var videoVoList []vo.VideoVo
-
-	videoIds, err := fs.RedisGetFavoriteList(userId)
-	if err != nil {
-		return videoVoList, err
-	}
-	for _, id := range videoIds {
-		videoList = append(videoList, videoRepository.GetVideoByVideoId(uint64(id)))
-	}
-	videoVoList = fs.videoList2Vo(videoList)
-	return videoVoList, nil
 }
 
 func (fs *FavoriteService) videoList2Vo(videoList []model.Video) []vo.VideoVo {

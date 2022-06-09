@@ -235,6 +235,27 @@ func (rc *RelationCache) RelationAction(where model.Follow) bool {
 	return true
 }
 
+// GetFollowerCountAndFollowCountAndIsFollow 查粉丝数量，关注数量，当前用户是否关注
+func (rc *RelationCache) GetFollowerCountAndFollowCountAndIsFollow(myId uint64, authorId uint64) (uint32, uint32, bool) {
+	var (
+		followerCount, followCount uint32
+		isFollow                   bool
+		//code1, code2, code3        int
+	)
+	followerCount, _ = relationCache.RedisGetFollowerCount(int64(authorId))
+	followCount, _ = relationCache.RedisGetFollowCount(int64(authorId))
+	//if code1 == codes.RedisNotFound || code2 == codes.RedisNotFound { // 查DB
+	//	where := model.User{UserId: authorId}
+	//	author, _ := userRepository.GetFirstUser(where)
+	//	followerCount, followCount = author.FollowerCount, author.FollowCount
+	//}
+	isFollow, _ = relationCache.RedisIsRelationCreated(int64(myId), int64(authorId))
+	//if code3 == codes.RedisNotFound {
+	//	isFollow = userRepository.IsFollow(myId, authorId) // 查DB
+	//}
+	return followerCount, followCount, isFollow
+}
+
 // SynchronizeRelationToDBFromRedis 将redis数据同步到DB
 // 分析：对于每个用户，都会有一个Follower zset和一个Follow zset，如当用户A关注用户B时，必然会导致两个zset的改变（B Follower Zset ++，A Follow Zset ++）
 // 考虑这种对等情况，所以只需要遍历 Follower key 或 Follow key其中一种入库即可

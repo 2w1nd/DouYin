@@ -55,8 +55,9 @@ func (ps *PublishService) PublishList(myId uint64, userId uint64) []dto.VideoDto
 
 	// 读缓存
 	videoVos := ps.videoCache.ReadPublishDataFromRedis(userId, myId)
-	if len(videoVos) != 0 {
-		return videoVos
+	videoDtos := convert.VideoVos2VideoDto(videoVos)
+	if len(videoDtos) != 0 {
+		return videoDtos
 	}
 
 	log.Println("查询数据库")
