@@ -61,8 +61,8 @@ func (rc *RelationCache) RedisIsRelationCreated(userId int64, followedUserId int
 
 // RedisDeleteUserUnRelation 取消关注后又关注时，在记录删除取消关注的set中删除 方向User->ToFollowed
 func (rc *RelationCache) RedisDeleteUserUnRelation(followInfo model.Follow) int {
-	setKey := "relation:" + "unfollower:" + strconv.Itoa(int(followInfo.UserId))
-	setKey0 := "relation:" + "unfollow:" + strconv.Itoa(int(followInfo.FollowedUserId))
+	setKey := "relation:" + "unfollow:" + strconv.Itoa(int(followInfo.UserId))
+	setKey0 := "relation:" + "unfollower:" + strconv.Itoa(int(followInfo.FollowedUserId))
 
 	setValue := strconv.Itoa(int(followInfo.FollowedUserId))
 	setValue0 := strconv.Itoa(int(followInfo.UserId))
@@ -115,7 +115,7 @@ func (rc *RelationCache) RedisAddRelation(relationInfo model.Follow) int {
 	} else if err != nil {
 		return codes.ERROR
 	} else {
-		//key和value已存在
+		// key和value已存在
 		return codes.ALREADYEXIST
 	}
 }
@@ -156,7 +156,7 @@ func (rc *RelationCache) RedisUnAddRelation(followInfo model.Follow) int {
 
 	_, err := global.REDIS.ZRank(ctxx, zsetKey, zsetMember).Result()
 	_, _ = global.REDIS.ZRank(ctxx, zsetKey0, zsetMember0).Result()
-	//点赞结果已删除
+	// 点赞结果已删除
 	if err == redis.Nil {
 		return codes.ALREADYDELETE
 	} else if err != nil {
@@ -172,9 +172,9 @@ func (rc *RelationCache) RedisUnAddRelation(followInfo model.Follow) int {
 	}
 }
 
-// RedisGetFollowList 从redis种获取用户关注列表
-func (rc *RelationCache) RedisGetFollowList(userId int64) ([]int64, error) {
-	var followIds []int64
+// RedisGetFollowList 从redis中获取用户关注用户IDs
+func (rc *RelationCache) RedisGetFollowList(userId int64) ([]string, error) {
+	var followIds []string
 	zsetKey := "relation:" + "follow:" + strconv.Itoa(int(userId))
 	values, err := global.REDIS.ZRevRangeWithScores(ctxx, zsetKey, 0, -1).Result()
 
@@ -182,29 +182,28 @@ func (rc *RelationCache) RedisGetFollowList(userId int64) ([]int64, error) {
 		return followIds, err
 	}
 	for _, value := range values {
-		//Member为interface类型不能进行强制转换
-		followid, _ := strconv.ParseInt(value.Member.(string), 10, 64)
-		followIds = append(followIds, followid)
+		// Member为interface类型不能进行强制转换
+		followId, _ := value.Member.(string)
+		followIds = append(followIds, followId)
 	}
 	return followIds, err
 }
 
-// RedisGetFollowerList 从redis中获取用户粉丝列表
-func (rc *RelationCache) RedisGetFollowerList(userId int64) ([]int64, error) {
-	var followIds []int64
+// RedisGetFollowerList 从redis中获取用户粉丝IDs
+func (rc *RelationCache) RedisGetFollowerList(userId int64) ([]string, error) {
+	var followerIds []string
 	zsetKey := "relation:" + "follower:" + strconv.Itoa(int(userId))
 	values, err := global.REDIS.ZRevRangeWithScores(ctxx, zsetKey, 0, -1).Result()
 
 	if err != nil {
-		return followIds, err
+		return followerIds, err
 	}
-	//fmt.Println("values:", values)
 	for _, value := range values {
-		//Member为interface类型不能进行强制转换
-		followid, _ := strconv.ParseInt(value.Member.(string), 10, 64)
-		followIds = append(followIds, followid)
+		// Member为interface类型不能进行强制转换
+		followerId, _ := value.Member.(string)
+		followerIds = append(followerIds, followerId)
 	}
-	return followIds, err
+	return followerIds, err
 }
 
 // AddAction 添加关注到DB
@@ -219,10 +218,10 @@ func (rc *RelationCache) AddAction(where model.Follow) bool {
 	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, codes.FOCUS); !IsOk {
 		return false
 	}
-
 	return true
 }
 
+// RelationAction 取消关注到DB
 func (rc *RelationCache) RelationAction(where model.Follow) bool {
 	if isOk := followRepository.DeleteFollowUserId(where); !isOk {
 		return false
@@ -248,7 +247,6 @@ func SynchronizeRelationToDBFromRedis() {
 	}
 	var rs RelationCache
 	var FollowerUserIds []string
-	//var rs service.RelationService
 	for _, userId := range zsetkey {
 		FollowerUserIds, err = global.REDIS.ZRange(ctxx, userId, 0, -1).Result()
 		uid := utils.String2Uint64(utils.SplitString(userId, ":"))

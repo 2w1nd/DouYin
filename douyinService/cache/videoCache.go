@@ -51,13 +51,13 @@ func (vc *VideoCache) ReadFeedDataFromRedis(userId uint64) (videoVos []vo.VideoV
 	}
 	for _, videoMsg := range videoMsgs {
 		// 查作者名称
-		authorName := vc.getAuthorNameInRedis(videoMsg.AuthorID)
+		authorName := vc.GetAuthorNameInRedis(videoMsg.AuthorID)
 		// 查粉丝数量，关注数量，当前用户是否关注
-		followerCount, followCount, isFollow := vc.getFollowCountAndFollowedCountAndIsFollow(userId, videoMsg.AuthorID)
+		followerCount, followCount, isFollow := vc.GetFollowerCountAndFollowCountAndIsFollow(userId, videoMsg.AuthorID)
 		// 查点赞数量，当前用户是否点赞
-		favoriteCount, isFavorite := vc.getFavoriteCountAndIsFavorite(userId, videoMsg.VideoID)
+		favoriteCount, isFavorite := vc.GetFavoriteCountAndIsFavorite(userId, videoMsg.VideoID)
 		// 查评论数量
-		commentCount := vc.getCommentCount(videoMsg.VideoID)
+		commentCount := vc.GetCommentCount(videoMsg.VideoID)
 
 		videoVo := vo.VideoVo{
 			VideoID: videoMsg.VideoID,
@@ -125,13 +125,13 @@ func (vc *VideoCache) ReadPublishDataFromRedis(userId, myId uint64) []dto.VideoD
 	}
 	for _, videoMsg := range videoMsgs {
 		// 查作者名称
-		authorName := vc.getAuthorNameInRedis(videoMsg.AuthorID)
+		authorName := vc.GetAuthorNameInRedis(videoMsg.AuthorID)
 		// 查粉丝数量，关注数量，当前用户是否关注
-		followerCount, followCount, isFollow := vc.getFollowCountAndFollowedCountAndIsFollow(myId, userId)
+		followerCount, followCount, isFollow := vc.GetFollowerCountAndFollowCountAndIsFollow(myId, userId)
 		// 查点赞数量，当前用户是否点赞
-		favoriteCount, isFavorite := vc.getFavoriteCountAndIsFavorite(myId, videoMsg.VideoID)
+		favoriteCount, isFavorite := vc.GetFavoriteCountAndIsFavorite(myId, videoMsg.VideoID)
 		// 查评论数量
-		commentCount := vc.getCommentCount(videoMsg.VideoID)
+		commentCount := vc.GetCommentCount(videoMsg.VideoID)
 
 		videoVo := dto.VideoDto{
 			Id: videoMsg.VideoID,
@@ -173,8 +173,8 @@ func (vc *VideoCache) LoadPublishDataToRedis(video model.Video) {
 	}
 }
 
-// getAuthorNameInRedis 查作者名称
-func (vc *VideoCache) getAuthorNameInRedis(authorId uint64) string {
+// GetAuthorNameInRedis 查作者名称
+func (vc *VideoCache) GetAuthorNameInRedis(authorId uint64) string {
 	authorName, _ := global.REDIS.HGet(context.Background(), "users:user", strconv.FormatUint(authorId, 10)).Result()
 	if authorName == "" { // 找不到，从数据库找
 		where := model.User{UserId: authorId}
@@ -184,29 +184,29 @@ func (vc *VideoCache) getAuthorNameInRedis(authorId uint64) string {
 	return authorName
 }
 
-// getFollowCountAndFollowedCountAndIsFollow 查粉丝数量，关注数量，当前用户是否关注
-func (vc *VideoCache) getFollowCountAndFollowedCountAndIsFollow(myId uint64, authorId uint64) (uint32, uint32, bool) {
+// GetFollowerCountAndFollowCountAndIsFollow 查粉丝数量，关注数量，当前用户是否关注
+func (vc *VideoCache) GetFollowerCountAndFollowCountAndIsFollow(myId uint64, authorId uint64) (uint32, uint32, bool) {
 	var (
 		followerCount, followCount uint32
 		isFollow                   bool
-		code1, code2, code3        int
+		//code1, code2, code3        int
 	)
-	followerCount, code1 = relationCache.RedisGetFollowerCount(int64(authorId))
-	followCount, code2 = relationCache.RedisGetFollowCount(int64(authorId))
-	if code1 == codes.RedisNotFound || code2 == codes.RedisNotFound { // 查DB
-		where := model.User{UserId: authorId}
-		author, _ := userRepository.GetFirstUser(where)
-		followerCount, followCount = author.FollowerCount, author.FollowCount
-	}
-	isFollow, code3 = relationCache.RedisIsRelationCreated(int64(myId), int64(authorId))
-	if code3 == codes.RedisNotFound {
-		isFollow = userRepository.IsFollow(myId, authorId) // 查DB
-	}
+	followerCount, _ = relationCache.RedisGetFollowerCount(int64(authorId))
+	followCount, _ = relationCache.RedisGetFollowCount(int64(authorId))
+	//if code1 == codes.RedisNotFound || code2 == codes.RedisNotFound { // 查DB
+	//	where := model.User{UserId: authorId}
+	//	author, _ := userRepository.GetFirstUser(where)
+	//	followerCount, followCount = author.FollowerCount, author.FollowCount
+	//}
+	isFollow, _ = relationCache.RedisIsRelationCreated(int64(myId), int64(authorId))
+	//if code3 == codes.RedisNotFound {
+	//	isFollow = userRepository.IsFollow(myId, authorId) // 查DB
+	//}
 	return followerCount, followCount, isFollow
 }
 
-// getFavoriteCountAndIsFavorite 查点赞数量，当前用户是否点赞
-func (vc *VideoCache) getFavoriteCountAndIsFavorite(userId uint64, videoId uint64) (uint32, bool) {
+// GetFavoriteCountAndIsFavorite 查点赞数量，当前用户是否点赞
+func (vc *VideoCache) GetFavoriteCountAndIsFavorite(userId uint64, videoId uint64) (uint32, bool) {
 	isFavorite := vc.favoriteCache.RedisIsUserLikeVideosCreated(int64(userId), int64(videoId))
 	var isFav bool
 	if isFavorite == codes.BITMAPLIKE {
@@ -231,8 +231,8 @@ func (vc *VideoCache) getFavoriteCountAndIsFavorite(userId uint64, videoId uint6
 	return favoriteCount, isFav
 }
 
-// getCommentCount 查评论数量
-func (vc *VideoCache) getCommentCount(videoId uint64) uint32 {
+// GetCommentCount 查评论数量
+func (vc *VideoCache) GetCommentCount(videoId uint64) uint32 {
 	CommentString := "videoComment:comment"
 	var commentVos []vo.CommentVo
 	var commentCount uint32
