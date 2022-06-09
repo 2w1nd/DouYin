@@ -209,13 +209,15 @@ func (rc *RelationCache) RedisGetFollowerList(userId int64) ([]string, error) {
 // AddAction 添加关注到DB
 func (rc *RelationCache) AddAction(where model.Follow) bool {
 	var out model.Follow
+	followCount, _ := rc.RedisGetFollowCount(int64(where.UserId))
+	followerCount, _ := rc.RedisGetFollowerCount(int64(where.UserId))
 	if isOk := followRepository.UpdateFollowUserId(where, &out); !isOk {
 		return false
 	}
-	if IsOk := userRepository.UpdateFollowCount(where.UserId, codes.FOCUS); !IsOk {
+	if IsOk := userRepository.UpdateFollowCount(where.UserId, followCount); !IsOk {
 		return false
 	}
-	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, codes.FOCUS); !IsOk {
+	if IsOk := userRepository.UpdateFollowerCount(where.FollowedUserId, followerCount); !IsOk {
 		return false
 	}
 	return true
