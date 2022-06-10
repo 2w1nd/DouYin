@@ -10,10 +10,7 @@ import (
 type VideoRepository struct {
 }
 
-// GetVideoWithAuthor
-// @Description: 获得视频以及对应的作者信息
-// @receiver: v
-// @return: []model.Video
+// GetVideoWithAuthor 获得视频以及对应的作者信息
 func (v *VideoRepository) GetVideoWithAuthor(latestTime time.Time) []model.Video {
 	var videoList []model.Video
 	query := global.DB.Model(model.Video{}).Preload("User")
@@ -26,9 +23,7 @@ func (v *VideoRepository) GetVideoWithAuthor(latestTime time.Time) []model.Video
 	return videoList
 }
 
-// GetVideoWithAuthorAndFollowAndFavorite
-// @Description: 查出视频以及对应作者信息，以及当前登录用户是否follow了该作者，是否favorite了该视频
-// @receiver: v
+// GetVideoWithAuthorAndFollowAndFavorite 查出视频以及对应作者信息，以及当前登录用户是否follow了该作者，是否favorite了该视频
 func (v *VideoRepository) GetVideoWithAuthorAndFollowAndFavorite(latestTime time.Time, id uint64) []model.Video {
 	var videoList []model.Video
 	query := global.DB.Debug().
@@ -59,8 +54,7 @@ func (v *VideoRepository) GetPublishList(userId uint64, pageIndex, pageSize int)
 	return videoList
 }
 
-// GetPublishListWithFavorite
-// 获取用户发布的视频列表,填充和Favorite，不填充author，pageIndex从1开始
+// GetPublishListWithFavorite 获取用户发布的视频列表,填充和Favorite，不填充author，pageIndex从1开始
 func (v *VideoRepository) GetPublishListWithFavorite(userId uint64, pageIndex, pageSize int, loginUser uint64) []model.Video {
 	//查询1652259488发布的视频，并且判断995有没有点过赞
 	//SELECT t1.*,(t2.id is NULL) as is_favorite from douyin_video as t1 left outer join douyin_favorite as t2
@@ -86,7 +80,10 @@ func (v *VideoRepository) SaveVideo(video model.Video) uint64 {
 
 func (v *VideoRepository) GetVideoByVideoId(videoId uint64) model.Video {
 	video := model.Video{}
-	query := global.DB.Debug().Model(model.Video{}).Preload("User").Where("video_id = ?", videoId)
+	query := global.DB.Debug().
+		Model(model.Video{}).
+		Preload("User").
+		Where("`douyin_video`.`video_id` = ?", videoId)
 	query.Find(&video)
 	return video
 }

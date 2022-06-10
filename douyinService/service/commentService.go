@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	context2 "github.com/DouYin/common/context"
 	"github.com/DouYin/common/entity/request"
 	"github.com/DouYin/common/entity/vo"
@@ -65,11 +64,9 @@ func (cs *CommentService) DeleteComment(req request.CommentReq) bool {
 func (cs *CommentService) GetCommentList(videoId uint64) []vo.CommentVo {
 	var commentVos []vo.CommentVo
 	CommentString := "videoComment:comment"
-	fmt.Println(CommentString + strconv.FormatUint(videoId, 10))
 	data1, _ := global.REDIS.Get(context.Background(), CommentString+strconv.FormatUint(videoId, 10)).Result()
-	fmt.Println(data1)
 	if data1 != "" {
-		log.Println("从缓存中查询")
+		log.Println("评论从缓存中查询")
 		err := json.Unmarshal([]byte(data1), &commentVos)
 		if err != nil {
 			return nil
@@ -77,7 +74,7 @@ func (cs *CommentService) GetCommentList(videoId uint64) []vo.CommentVo {
 
 	} else {
 		// 从数据库中查询
-		log.Println("从数据库中查询")
+		log.Println("评论从数据库中查询")
 		commentList, _ := commentRepository.CommentListByVideoId(videoId)
 		// 放入缓存
 		commentVos = cs.commentList2Vo(commentList, videoId)

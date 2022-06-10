@@ -7,7 +7,6 @@ import (
 	"github.com/DouYin/service/service"
 	"github.com/DouYin/service/utils"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 )
 
@@ -21,7 +20,6 @@ func Feed(c *gin.Context) {
 	user = utils.GetUserContext(c)
 	latestTime := c.Query("latest_time")
 	videoList, nextTime := feedService.Feed(user.Id, latestTime)
-	log.Println(nextTime)
 	c.JSON(http.StatusOK, vo.VideoListVo{
 		Response:  response.Response{StatusCode: response.SUCCESS, StatusMsg: "操作成功"},
 		NextTime:  nextTime.Unix(),
