@@ -78,7 +78,6 @@ func (fc *FavoriteCache) RedisIsUserLikeVideosCreated(userId int64, videoId int6
 	if err != nil {
 		return codes.ERROR
 	}
-
 	//返回查询到的结果
 	if ok == 1 {
 		return codes.BITMAPLIKE
@@ -147,21 +146,20 @@ func (fc *FavoriteCache) RedisDeleteVideoLikedByUsers(favoriteInfo model.Favorit
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(favoriteInfo.VideoId))
 	_, err := global.REDIS.SetBit(ctx, bitmapKey, int64(favoriteInfo.UserId)%math.MaxInt32, 0).Result()
 	if err != nil {
-		//fmt.Println("redisDeleteVideoLikedByUsers", 1)
 		return codes.ERROR
 	}
 	return codes.SUCCESS
 }
 
 // RedisGetVideoFavoriteCount 根据VideoId查询对应Video点赞数量
-func (fc *FavoriteCache) RedisGetVideoFavoriteCount(videoId int64) (int64, int) {
+func (fc *FavoriteCache) RedisGetVideoFavoriteCount(videoId int64) (uint32, int) {
 	bitmapKey := "favorite:" + "video_likedby_users:" + strconv.Itoa(int(videoId))
 	var favoriteCount *redis.BitCount
 	ans, err := global.REDIS.BitCount(ctx, bitmapKey, favoriteCount).Result()
 	if err == redis.Nil {
 		return 0, codes.RedisNotFound
 	}
-	return ans, codes.RedisNotFound
+	return uint32(ans), codes.RedisNotFound
 }
 
 // GetFavoriteCountAndIsFavorite 查点赞数量，当前用户是否点赞
@@ -180,13 +178,14 @@ func (fc *FavoriteCache) GetFavoriteCountAndIsFavorite(userId uint64, videoId ui
 		isFav = false
 	}
 	var favoriteCount uint32
-	redisFavCount, _ := fc.RedisGetVideoFavoriteCount(int64(videoId))
-	if redisFavCount == 0 {
-		video := videoRepository.GetVideoByVideoId(videoId) // 查数据库
-		favoriteCount = video.FavoriteCount
-	} else {
-		favoriteCount = uint32(redisFavCount)
-	}
+	favoriteCount, _ = fc.RedisGetVideoFavoriteCount(int64(videoId))
+	//if code == codes.RedisNotFound {
+	//	log.Println("favoritecache：GetFavoriteCountAndIsFavorite查数据库")
+	//	video := videoRepository.GetVideoByVideoId(videoId) // 查数据库
+	//	favoriteCount = video.FavoriteCount
+	//} else {
+	//	favoriteCount = uint32(redisFavCount)
+	//}
 	return favoriteCount, isFav
 }
 
