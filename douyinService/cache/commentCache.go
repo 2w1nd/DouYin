@@ -30,5 +30,6 @@ func (cc *CommentCache) GetCommentCount(videoId uint64) uint32 {
 		video := videoRepository.GetVideoByVideoId(videoId)
 		commentCount = video.CommentCount
 	}
+	log.Println(commentCount)
 	return commentCount
 }

@@ -56,8 +56,10 @@ func (cs *CommentService) DeleteComment(req request.CommentReq) bool {
 	if isOk := commentRepository.DeleteCommentById(where, req.VideoId); !isOk {
 		return false
 	}
-	// 放入缓存
-	global.REDIS.Del(context.Background(), strconv.FormatUint(req.VideoId, 10))
+	// 删除缓存
+	log.Println(req.VideoId)
+	CommentString := "videoComment:comment"
+	global.REDIS.Del(context.Background(), CommentString+strconv.FormatUint(req.VideoId, 10))
 	return true
 }
 
@@ -71,15 +73,17 @@ func (cs *CommentService) GetCommentList(videoId uint64) []vo.CommentVo {
 		if err != nil {
 			return nil
 		}
-
 	} else {
 		// 从数据库中查询
 		log.Println("评论从数据库中查询")
 		commentList, _ := commentRepository.CommentListByVideoId(videoId)
-		// 放入缓存
+		log.Println(commentList)
 		commentVos = cs.commentList2Vo(commentList, videoId)
-		data, _ := json.Marshal(commentVos)
-		global.REDIS.Set(context.Background(), CommentString+strconv.FormatUint(videoId, 10), data, 0)
+		// 放入缓存
+		if len(commentList) != 0 {
+			data, _ := json.Marshal(commentVos)
+			global.REDIS.Set(context.Background(), CommentString+strconv.FormatUint(videoId, 10), data, 0)
+		}
 	}
 	return commentVos
 }
