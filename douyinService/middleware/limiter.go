@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"context"
-	"github.com/DouYin/common/entity/response"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
 	"log"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -23,8 +23,8 @@ func NewLimiter(r rate.Limit, b int, t time.Duration) gin.HandlerFunc {
 		if err := l.(*rate.Limiter).Wait(ctx); err != nil {
 			// 这里先不处理日志了，如果返回错误就直接 429
 			log.Println("进入限流器")
-			//c.AbortWithStatusJSON(http.StatusTooManyRequests, )
-			response.FailWithMessage("点击太快了", c)
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, "点击太快了")
+			//response.FailWithMessage("点击太快了", c)
 		}
 		c.Next()
 	}

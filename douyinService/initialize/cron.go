@@ -12,12 +12,12 @@ import (
 
 func Cron() {
 	c := cron.New()
-	// 每5分钟同步一次关注粉丝关系
-	_, _ = c.AddFunc("*/5 * * * *", func() {
+	// 每1个半小时同步一次关注粉丝关系
+	_, _ = c.AddFunc("@every 1h30m", func() {
 		cache.SynchronizeRelationToDBFromRedis()
 	})
-	// 每10分钟同步一次视频点赞关系
-	_, _ = c.AddFunc("*/10 * * * *", func() {
+	// 每2小时同步一次视频点赞关系
+	_, _ = c.AddFunc("@every 2h", func() {
 		cache.SynchronizeFavoriteDBFromRedis()
 	})
 	c.Start()

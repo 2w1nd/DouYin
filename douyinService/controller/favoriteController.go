@@ -75,7 +75,6 @@ func FavoriteAction(c *gin.Context) {
 // @param: c
 func FavoriteList(c *gin.Context) {
 	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
-	fmt.Println("userId:", userId)
 
 	if err != nil {
 		c.JSON(response.ERROR, vo.FavoriteListVo{

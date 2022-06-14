@@ -206,7 +206,6 @@ func SynchronizeFavoriteDBFromRedis() {
 				VideoId:   vid,
 				IsDeleted: false,
 			})
-
 		}
 	}
 
