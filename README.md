@@ -39,10 +39,6 @@ bytedance youth training camp project
 
 ## 3 项目成果
 
-![image-20220610094311682](https://raw.githubusercontent.com/2w1nd/pic-bed/main/blog/image-20220610094311682.png)![image-20220610094334950](https://raw.githubusercontent.com/2w1nd/pic-bed/main/blog/image-20220610094334950.png)![image-20220610094351534](https://raw.githubusercontent.com/2w1nd/pic-bed/main/blog/image-20220610094351534.png)
-
-![image-20220610094404680](https://raw.githubusercontent.com/2w1nd/pic-bed/main/blog/image-20220610094404680.png)![image-20220610094422299](https://raw.githubusercontent.com/2w1nd/pic-bed/main/blog/image-20220610094422299.png)![image-20220610094707866](https://raw.githubusercontent.com/2w1nd/pic-bed/main/blog/image-20220610094707866.png)![image-20220610094500188](https://raw.githubusercontent.com/2w1nd/pic-bed/main/blog/image-20220610094500188.png)
-
 ## 4 文档地址
 
 [开发文档 - Feishu Doc](https://z5g9mu4ryx.feishu.cn/docs/doccnp5EE8GgHSfZPQQrp9HMjag)
