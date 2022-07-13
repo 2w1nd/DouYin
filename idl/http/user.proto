@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "hertz/user";
+
+import "api.proto";
+
+
+message BaseResp {
+  int64 status_code = 1;
+  string status_msg = 2;
+}
+
+message LoginReq {
+  string username = 1[(api.query)="username"];
+  string password = 2[(api.query)="password"];
+}
+
+message LoginResp {
+  BaseResp base_resp = 1;
+  int64 user_id = 2;
+  string token = 3;
+}
+
+message RegisterReq {
+  string username = 1[(api.query)="username"];
+  string password = 2[(api.query)="password"];
+}
+
+message RegisterResp {
+  BaseResp base_resp = 1;
+  int64 user_id = 2;
+  string token = 3;
+}
+
+message UserReq {
+  int64 user_id = 1;
+  string token = 2;
+}
+
+message User {
+  int64 id = 1;
+  string name = 2;
+  string follow_count = 3;
+  string follower_count = 4;
+  bool is_follow = 5;
+}
+
+message UserResp {
+  BaseResp base_resp = 1;
+  repeated User user = 2;
+}
+
+service UserService {
+  rpc Login(LoginReq) returns(LoginResp) {
+    option (api.post) = "/user/login";
+  }
+  rpc Register(RegisterReq) returns(RegisterResp) {
+    option (api.post) = "/user/register";
+  }
+  rpc User(UserReq) returns(UserResp) {
+    option (api.get) = "/user";
+  }
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "hertz/user";
+
+import "api.proto";
+
+message BaseResp {
+  int64 status_code = 1;
+  string status_msg = 2;
+}
+
+message commentActionReq {
+
+}
