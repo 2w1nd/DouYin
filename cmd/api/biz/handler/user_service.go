@@ -22,9 +22,23 @@ func Login(ctx context.Context, c *app.RequestContext) {
 		c.String(400, err.Error())
 		return
 	}
-	uid, err := rpc.CheckUser(ctx, &user1.CheckUserRequest{
-		Username: loginReq.Username,
-		Password: loginReq.Password,
+	resp := new(user.LoginResp)
+	c.JSON(200, resp)
+}
+
+// Register .
+// @router /user/register [POST]
+func Register(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var registerVar user.RegisterReq
+	err = c.BindAndValidate(&registerVar)
+	if err != nil {
+		c.String(400, err.Error())
+		return
+	}
+	usr, err := rpc.CreateUser(context.Background(), &user1.CreateUserRequest{
+		Username: registerVar.Username,
+		Password: registerVar.Password,
 	})
 	if err != nil {
 		e := errno.ConvertErr(err)
@@ -34,24 +48,8 @@ func Login(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	resp := new(user.LoginResp)
-
-	c.JSON(200, resp)
-}
-
-// Register .
-// @router /user/register [POST]
-func Register(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req user.RegisterReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(400, err.Error())
-		return
-	}
-
 	resp := new(user.RegisterResp)
-
+	e := errno.Success
 	c.JSON(200, resp)
 }
 

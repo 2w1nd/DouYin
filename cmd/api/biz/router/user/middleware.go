@@ -4,7 +4,9 @@ package User
 
 import (
 	"context"
+	"github.com/DouYin/cmd/api/rpc"
 	"github.com/DouYin/hertz_gen/model/hertz/user"
+	user1 "github.com/DouYin/kitex_gen/user"
 	"github.com/DouYin/pkg/constants"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/hertz-contrib/jwt"
@@ -13,6 +15,13 @@ import (
 )
 
 var identityKey = "id"
+
+type loginResponse struct {
+	Code  int64  `json:"status_code"`
+	Msg   string `json:"status_msg"`
+	Uid   int64  `json:"user_id"`
+	Token string `json:"token"`
+}
 
 func rootMw() []app.HandlerFunc {
 	// your code...
@@ -24,17 +33,18 @@ func _userMw() []app.HandlerFunc {
 	return nil
 }
 
-func _loginMw() []app.HandlerFunc {
+func _loginMw() (mws []app.HandlerFunc) {
 	authMiddleware, err := jwt.New(&jwt.HertzJWTMiddleware{
-		Realm:       "test zone",
-		Key:         []byte(constants.JWTSecretKey),
-		Timeout:     time.Hour,
-		MaxRefresh:  time.Hour,
-		IdentityKey: identityKey,
+		Realm:            "DouYin",                       // 标识
+		SigningAlgorithm: "HS256",                        // 加密算法
+		Key:              []byte(constants.JWTSecretKey), // 密钥
+		Timeout:          time.Hour * 24,                 // token的过期时间
+		MaxRefresh:       time.Hour,                      // 刷新最大延时
+		IdentityKey:      identityKey,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(*user.User); ok {
 				return jwt.MapClaims{
-					identityKey: v.Name,
+					identityKey: v.Id,
 				}
 			}
 			return jwt.MapClaims{}
@@ -50,19 +60,21 @@ func _loginMw() []app.HandlerFunc {
 			if err := c.BindAndValidate(&loginVals); err != nil {
 				return "", jwt.ErrMissingLoginValues
 			}
-
+			if uid, err := rpc.CheckUser(ctx, &user1.CheckUserRequest{Username: loginVals.Username, Password: loginVals.Password}); err == nil {
+				c.Set("key", uid)
+				return &user.User{
+					Id: uid,
+				}, nil
+			}
 			return nil, jwt.ErrFailedAuthentication
 		},
-		Authorizator: func(data interface{}, ctx context.Context, c *app.RequestContext) bool {
-			if v, ok := data.(*user.User); ok && v.Name == "admin" {
-				return true
-			}
-			return false
-		},
-		Unauthorized: func(ctx context.Context, c *app.RequestContext, code int, message string) {
-			c.JSON(code, map[string]interface{}{
-				"code":    code,
-				"message": message,
+		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, time time.Time) {
+			uId, _ := c.Get("key")
+			c.JSON(200, loginResponse{
+				Code:  200,
+				Msg:   "登录成功",
+				Uid:   uId.(int64),
+				Token: token,
 			})
 		},
 		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
@@ -72,7 +84,8 @@ func _loginMw() []app.HandlerFunc {
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}
-	return authMiddleware.MiddlewareFunc()
+	mws = append(mws, authMiddleware.MiddlewareFunc())
+	return
 }
 
 func _registerMw() []app.HandlerFunc {
