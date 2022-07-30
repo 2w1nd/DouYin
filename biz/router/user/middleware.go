@@ -16,9 +16,14 @@ func _userMw() []app.HandlerFunc {
 	return nil
 }
 
-func _loginMw() (mws []app.HandlerFunc) {
+func _userMw() []app.HandlerFunc {
 	// your code...
-	return
+	return nil
+}
+
+func _loginMw() []app.HandlerFunc {
+	// your code...
+	return nil
 }
 
 func _registerMw() []app.HandlerFunc {

@@ -3,9 +3,9 @@
 package User
 
 import (
-	"github.com/DouYin/cmd/api/biz/handler"
-	"github.com/DouYin/cmd/api/biz/middleware/auth"
 	"github.com/cloudwego/hertz/pkg/app/server"
+
+	user "github.com/DouYin/biz/handler/user"
 )
 
 /*
@@ -16,12 +16,12 @@ import (
 
 // Register register routes based on the IDL 'api.${HTTP Method}' annotation.
 func Register(r *server.Hertz) {
-	authMiddle := auth.NewMiddleware(auth.Config)
-	root := r.Group("/douyin", rootMw()...)
-	root.GET("/user", authMiddle.JWT.MiddlewareFunc(), handler.User)
+
+	root := r.Group("/", rootMw()...)
+	root.GET("/user", append(_userMw(), user.User)...)
 	{
 		_user := root.Group("/user", _userMw()...)
-		_user.POST("/login", authMiddle.JWT.LoginHandler, handler.Login)
-		_user.POST("/register", handler.Register, authMiddle.JWT.LoginHandler)
+		_user.POST("/login", append(_loginMw(), user.Login)...)
+		_user.POST("/register", append(_registerMw(), user.Register)...)
 	}
 }

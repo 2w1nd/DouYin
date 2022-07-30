@@ -37,7 +37,7 @@ func MGet(ctx context.Context, ids []int64) ([]*User, error) {
 		return res, nil
 	}
 
-	if err := DB.WithContext(ctx).Where("id in ?", ids).Find(&res).Error; err != nil {
+	if err := DB.WithContext(ctx).Where("user_id in ?", ids).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil

@@ -52,3 +52,7 @@ bytedance youth training camp project
 ```
 docker run -p 3306:3306 -v $PWD/conf:/etc/mysql/conf.d -v $PWD/logs:/logs -v $PWD/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=0000 --privileged=true --name mysql -d mysql:5.7
 ```
+
+hz new -I idl -idl idl/http/user.proto --module github.com/DouYin
+
+kitex -module github.com/DouYin -service userservice -type protobuf idl/rpc/user.proto

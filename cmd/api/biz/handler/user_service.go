@@ -7,8 +7,10 @@ import (
 	"github.com/DouYin/cmd/api/rpc"
 	"github.com/DouYin/hertz_gen/model/hertz/user"
 	user1 "github.com/DouYin/kitex_gen/user"
+	"github.com/DouYin/pkg/constants"
 	"github.com/DouYin/pkg/errno"
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/hertz-contrib/jwt"
 	"net/http"
 )
 
@@ -36,7 +38,7 @@ func Register(ctx context.Context, c *app.RequestContext) {
 		c.String(400, err.Error())
 		return
 	}
-	usr, err := rpc.CreateUser(context.Background(), &user1.CreateUserRequest{
+	_, err = rpc.CreateUser(context.Background(), &user1.CreateUserRequest{
 		Username: registerVar.Username,
 		Password: registerVar.Password,
 	})
@@ -48,13 +50,6 @@ func Register(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	resp := new(user.RegisterResp)
-	e := errno.Success
-	resp.StatusCode = e.ErrCode
-	resp.StatusMsg = e.ErrMsg
-	resp.UserId = usr.UserId
-	resp.Token = ""
-	c.JSON(200, resp)
 }
 
 // User .
@@ -67,8 +62,35 @@ func User(ctx context.Context, c *app.RequestContext) {
 		c.String(400, err.Error())
 		return
 	}
-
+	claims := jwt.ExtractClaims(ctx, c)
+	uid := int64(claims[constants.IdentityKey].(float64))
+	users, err := rpc.MGetUsers(context.Background(), &user1.MGetUserRequest{
+		UserId:        uid,
+		TargetUserIds: []int64{req.UserId},
+	})
+	if err != nil {
+		e := errno.ConvertErr(err)
+		c.JSON(http.StatusOK, BaseResponse{
+			Code: e.ErrCode,
+			Msg:  e.ErrMsg,
+		})
+		return
+	}
+	if len(users) == 0 {
+		e := errno.UserErr.WithMsg("user isn't exist")
+		c.JSON(http.StatusOK, BaseResponse{
+			Code: e.ErrCode,
+			Msg:  e.ErrMsg,
+		})
+	}
+	e := errno.Success
 	resp := new(user.UserResp)
-
+	resp = &user.UserResp{
+		BaseResp: user.BaseResp{
+			StatusCode: e.ErrCode,
+			StatusMsg:  e.ErrMsg,
+		},
+		User: UserRPC2Hertz(users[0]),
+	}
 	c.JSON(200, resp)
 }

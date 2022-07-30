@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/DouYin/cmd/user/dal/db"
+	"github.com/DouYin/cmd/user/pack"
 	"github.com/DouYin/kitex_gen/user"
 	"github.com/DouYin/pkg/constants"
 	"github.com/DouYin/pkg/errno"
@@ -42,19 +43,19 @@ func (c *UserInfoService) Check(req *user.CheckUserRequest) (uid int64, err erro
 }
 
 func (c *UserInfoService) MGet(req *user.MGetUserRequest) ([]*user.User, error) {
-	//if len(req.TargetUserIds) == 0 {
-	//	return make([]*user.User, 0), nil
-	//}
-	//urs, err := db.MGet(m.ctx, req.TargetUserIds)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if len(urs) == 0 {
-	//	return nil, errno.UserErr.WithMsg("user isn't exist")
-	//}
-	//users := pack.Users(urs)
+	if len(req.TargetUserIds) == 0 {
+		return make([]*user.User, 0), nil
+	}
+	urs, err := db.MGet(c.ctx, req.TargetUserIds)
+	if err != nil {
+		return nil, err
+	}
+	if len(urs) == 0 {
+		return nil, errno.UserErr.WithMsg("user isn't exist")
+	}
+	users := pack.Users(urs)
 	//for i, u := range users {
-	//	countInfo, err := rpc.RelationInfo(m.ctx, &relation.InfoRequest{
+	//	countInfo, err := rpc.RelationInfo(c.ctx, &relation.InfoRequest{
 	//		UserId:       req.UserId,
 	//		TargetUserId: u.Id,
 	//	})
@@ -65,7 +66,7 @@ func (c *UserInfoService) MGet(req *user.MGetUserRequest) ([]*user.User, error) 
 	//	users[i].FollowerCount = countInfo.FollowerCount
 	//	users[i].IsFollow = countInfo.IsFollow
 	//}
-	return nil, nil
+	return users, nil
 }
 
 func (c *UserInfoService) IsExist(req *user.IsExistByIdRequest) (bool, error) {

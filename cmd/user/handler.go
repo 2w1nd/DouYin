@@ -28,8 +28,15 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, req *user.CreateUserRe
 
 // MGetUser implements the UserServiceImpl interface.
 func (s *UserServiceImpl) MGetUser(ctx context.Context, req *user.MGetUserRequest) (resp *user.MGetUserResponse, err error) {
-	// TODO: Your code here...
-	return
+	resp = new(user.MGetUserResponse)
+	users, err := service.NewUserInfoService(ctx).MGet(req)
+	if err != nil {
+		resp.BaseResp = pack.BuildBaseResp(err)
+		return resp, nil
+	}
+	resp.BaseResp = pack.BuildBaseResp(errno.Success)
+	resp.Users = users
+	return resp, nil
 }
 
 // CheckUser implements the UserServiceImpl interface.

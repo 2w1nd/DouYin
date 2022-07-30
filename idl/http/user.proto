@@ -42,14 +42,14 @@ message UserReq {
 message User {
   int64 UserId = 1;
   string name = 2;
-  string follow_count = 3;
-  string follower_count = 4;
+  int32 follow_count = 3;
+  int32 follower_count = 4;
   bool is_follow = 5;
 }
 
 message UserResp {
   BaseResp base_resp = 1;
-  repeated User user = 2;
+  User user = 2;
 }
 
 service UserService {
