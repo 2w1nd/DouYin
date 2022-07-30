@@ -6,7 +6,6 @@ import (
 	"github.com/DouYin/hertz_gen/model/hertz/user"
 	user1 "github.com/DouYin/kitex_gen/user"
 	"github.com/DouYin/pkg/constants"
-	"github.com/bytedance/gopkg/util/logger"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/hertz-contrib/jwt"
 	"time"
@@ -35,7 +34,6 @@ var Config = &jwt.HertzJWTMiddleware{
 		return jwt.MapClaims{}
 	},
 	IdentityHandler: func(ctx context.Context, c *app.RequestContext) interface{} {
-		logger.Info("IdentityHandler")
 		claims := jwt.ExtractClaims(ctx, c)
 		return &user.User{
 			UserId: int64(claims[constants.IdentityKey].(float64)),
