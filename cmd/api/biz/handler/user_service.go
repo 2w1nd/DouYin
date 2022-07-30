@@ -50,6 +50,10 @@ func Register(ctx context.Context, c *app.RequestContext) {
 	}
 	resp := new(user.RegisterResp)
 	e := errno.Success
+	resp.StatusCode = e.ErrCode
+	resp.StatusMsg = e.ErrMsg
+	resp.UserId = usr.UserId
+	resp.Token = ""
 	c.JSON(200, resp)
 }
 

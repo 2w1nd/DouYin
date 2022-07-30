@@ -3,8 +3,10 @@ module github.com/DouYin
 go 1.16
 
 require (
+	github.com/bytedance/gopkg v0.0.0-20220509134931-d1878f638986
 	github.com/cloudwego/hertz v0.1.0
 	github.com/cloudwego/kitex v0.3.2
+	github.com/google/uuid v1.1.2
 	github.com/hertz-contrib/jwt v1.0.0
 	github.com/kitex-contrib/registry-etcd v0.0.0-20220618003451-c5459d0f49f5
 	github.com/kitex-contrib/tracer-opentracing v0.0.2

@@ -8,6 +8,7 @@ import (
 	"github.com/DouYin/hertz_gen/model/hertz/user"
 	user1 "github.com/DouYin/kitex_gen/user"
 	"github.com/DouYin/pkg/constants"
+	"github.com/bytedance/gopkg/util/logger"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/hertz-contrib/jwt"
 	"log"
@@ -43,14 +44,16 @@ func _loginMw() (mws []app.HandlerFunc) {
 		IdentityKey:      identityKey,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(*user.User); ok {
+				logger.Info(v)
 				return jwt.MapClaims{
-					identityKey: v.Id,
+					identityKey: v.UserId,
 				}
 			}
 			return jwt.MapClaims{}
 		},
 		IdentityHandler: func(ctx context.Context, c *app.RequestContext) interface{} {
 			claims := jwt.ExtractClaims(ctx, c)
+			logger.Info(claims)
 			return &user.User{
 				Name: claims[identityKey].(string),
 			}
@@ -63,7 +66,7 @@ func _loginMw() (mws []app.HandlerFunc) {
 			if uid, err := rpc.CheckUser(ctx, &user1.CheckUserRequest{Username: loginVals.Username, Password: loginVals.Password}); err == nil {
 				c.Set("key", uid)
 				return &user.User{
-					Id: uid,
+					UserId: uid,
 				}, nil
 			}
 			return nil, jwt.ErrFailedAuthentication
@@ -77,6 +80,20 @@ func _loginMw() (mws []app.HandlerFunc) {
 				Token: token,
 			})
 		},
+		Authorizator: func(data interface{}, ctx context.Context, c *app.RequestContext) bool {
+			if usr, ok := data.(*user.User); ok {
+				logger.Info(usr)
+				return true
+			}
+			return false
+		},
+		Unauthorized: func(ctx context.Context, c *app.RequestContext, code int, message string) {
+			c.JSON(code, map[string]interface{}{
+				"code":    code,
+				"message": message,
+			})
+		},
+		CookieName:    "token",
 		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,
@@ -84,7 +101,7 @@ func _loginMw() (mws []app.HandlerFunc) {
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}
-	mws = append(mws, authMiddleware.MiddlewareFunc())
+	mws = append(mws, authMiddleware.LoginHandler)
 	return
 }
 

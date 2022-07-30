@@ -8,6 +8,7 @@ import (
 	"github.com/DouYin/kitex_gen/user"
 	"github.com/DouYin/pkg/constants"
 	"github.com/DouYin/pkg/errno"
+	"github.com/bytedance/gopkg/util/logger"
 	"io"
 )
 
@@ -22,6 +23,7 @@ func NewUserInfoService(ctx context.Context) *UserInfoService {
 }
 
 func (c *UserInfoService) Check(req *user.CheckUserRequest) (uid int64, err error) {
+	logger.Info("check user")
 	h := sha256.New()
 	if _, err = io.WriteString(h, req.Password+constants.UserSalt); err != nil {
 		return 0, err
@@ -33,10 +35,10 @@ func (c *UserInfoService) Check(req *user.CheckUserRequest) (uid int64, err erro
 		return 0, err
 	}
 
-	if u.PassWord != password {
+	if u.Password != password {
 		return 0, errno.UserErr.WithMsg("username or password is wrong")
 	}
-	return int64(u.ID), nil
+	return u.UserId, nil
 }
 
 func (c *UserInfoService) MGet(req *user.MGetUserRequest) ([]*user.User, error) {

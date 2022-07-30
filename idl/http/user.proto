@@ -40,7 +40,7 @@ message UserReq {
 }
 
 message User {
-  int64 id = 1;
+  int64 UserId = 1;
   string name = 2;
   string follow_count = 3;
   string follower_count = 4;

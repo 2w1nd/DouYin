@@ -12,7 +12,7 @@ func User(u *db.User) *user.User {
 	}
 	return &user.User{
 		Id:   int64(u.ID),
-		Name: u.UserName,
+		Name: u.Username,
 	}
 }
 

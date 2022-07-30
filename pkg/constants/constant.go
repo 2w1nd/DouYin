@@ -32,7 +32,7 @@ const (
 	QiNiuBucket    = "micro-tiktok"
 	QiNiuServer    = "http://data.mtt.dtpark.top/"
 
-	EtcdAddress     = "172.19.192.1:2379"
+	EtcdAddress     = "47.96.157.235:2379"
 	RedisAddress    = "127.0.0.1:16379"
-	MySQLDefaultDSN = "douyin:5842020@tcp(1.117.93.124:3306)/root?charset=utf8&parseTime=True&loc=Local"
+	MySQLDefaultDSN = "root:5842020@tcp(1.117.93.124:3306)/douyin?charset=utf8&parseTime=True&loc=Local"
 )

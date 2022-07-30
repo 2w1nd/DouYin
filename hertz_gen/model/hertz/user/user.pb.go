@@ -26,8 +26,8 @@ type BaseResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	StatusCode int64  `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" form:"status_code" json:"statusCode,omitempty" query:"status_code"`
-	StatusMsg  string `protobuf:"bytes,2,opt,name=status_msg,json=statusMsg,proto3" form:"status_msg" json:"statusMsg,omitempty" query:"status_msg"`
+	StatusCode int64  `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" form:"status_code" json:"status_code" query:"status_code"`
+	StatusMsg  string `protobuf:"bytes,2,opt,name=status_msg,json=statusMsg,proto3" form:"status_msg" json:"status_msg" query:"status_msg"`
 }
 
 func (x *BaseResp) Reset() {
@@ -254,9 +254,9 @@ type RegisterResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	BaseResp *BaseResp `protobuf:"bytes,1,opt,name=base_resp,json=baseResp,proto3" form:"base_resp" json:"baseResp,omitempty" query:"base_resp"`
-	UserId   int64     `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" form:"user_id" json:"userId,omitempty" query:"user_id"`
-	Token    string    `protobuf:"bytes,3,opt,name=token,proto3" form:"token" json:"token,omitempty" query:"token"`
+	BaseResp
+	UserId int64  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" form:"user_id" json:"user_id,omitempty" query:"user_id"`
+	Token  string `protobuf:"bytes,3,opt,name=token,proto3" form:"token" json:"token,omitempty" query:"token"`
 }
 
 func (x *RegisterResp) Reset() {
@@ -289,13 +289,6 @@ func (x *RegisterResp) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RegisterResp.ProtoReflect.Descriptor instead.
 func (*RegisterResp) Descriptor() ([]byte, []int) {
 	return file_user_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *RegisterResp) GetBaseResp() *BaseResp {
-	if x != nil {
-		return x.BaseResp
-	}
-	return nil
 }
 
 func (x *RegisterResp) GetUserId() int64 {
@@ -372,7 +365,7 @@ type User struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id            int64  `protobuf:"varint,1,opt,name=id,proto3" form:"id" json:"id,omitempty" query:"id"`
+	UserId        int64  `protobuf:"varint,1,opt,name=id,proto3" form:"user_id" json:"user_id,omitempty" query:"user_id"`
 	Name          string `protobuf:"bytes,2,opt,name=name,proto3" form:"name" json:"name,omitempty" query:"name"`
 	FollowCount   string `protobuf:"bytes,3,opt,name=follow_count,json=followCount,proto3" form:"follow_count" json:"followCount,omitempty" query:"follow_count"`
 	FollowerCount string `protobuf:"bytes,4,opt,name=follower_count,json=followerCount,proto3" form:"follower_count" json:"followerCount,omitempty" query:"follower_count"`
@@ -411,9 +404,9 @@ func (*User) Descriptor() ([]byte, []int) {
 	return file_user_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *User) GetId() int64 {
+func (x *User) GetUserId() int64 {
 	if x != nil {
-		return x.Id
+		return x.UserId
 	}
 	return 0
 }

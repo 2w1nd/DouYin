@@ -10,6 +10,7 @@ import (
 	"github.com/DouYin/kitex_gen/user"
 	"github.com/DouYin/pkg/constants"
 	"github.com/DouYin/pkg/errno"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"io"
 )
@@ -41,8 +42,10 @@ func (c *UserActionService) Create(req *user.CreateUserRequest) (*user.User, err
 	password := fmt.Sprintf("%x", h.Sum(nil))
 
 	usr, err := db.Create(c.ctx, &db.User{
-		UserName: req.Username,
-		PassWord: password,
+		UserId:   int64(uuid.New().ID()),
+		Name:     req.Username,
+		Username: req.Username,
+		Password: password,
 	})
 	if err != nil {
 		return nil, err

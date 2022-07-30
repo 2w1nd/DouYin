@@ -6,6 +6,7 @@ import (
 	"github.com/DouYin/kitex_gen/user/userservice"
 	"github.com/DouYin/pkg/constants"
 	"github.com/DouYin/pkg/errno"
+	"github.com/bytedance/gopkg/util/logger"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/retry"
 	etcd "github.com/kitex-contrib/registry-etcd"
@@ -39,6 +40,7 @@ func initUserRpc() {
 func CreateUser(ctx context.Context, req *user.CreateUserRequest) (*user.CreateUserResponse, error) {
 	resp, err := userClient.CreateUser(ctx, req)
 	if err != nil {
+		logger.Error(err)
 		return nil, err
 	}
 	if resp.BaseResp.StatusCode != 0 {
